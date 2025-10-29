@@ -1,0 +1,14 @@
+package ru.practicum.model.hub.device_action;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
+public class DeviceAction {
+    @NotBlank
+    String sensorId;
+
+    @NotNull
+    DeviceActionType type;
+
+    Integer value;
+}
