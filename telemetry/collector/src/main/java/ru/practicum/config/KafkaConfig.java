@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import ru.practicum.GeneralAvroSerializer;
 
+import java.util.EnumMap;
 import java.util.Properties;
 
 @Configuration
@@ -15,26 +16,20 @@ public class KafkaConfig {
     private String bootstrapServers;
 
     @Bean
-    public Properties kafkaProducerConfig() {
-        Properties config = new Properties();
-        config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, GeneralAvroSerializer.class);
+    public EnumMap<TopicType, String> kafkaTopics() {
+        EnumMap<TopicType, String> topics = new EnumMap<>(TopicType.class);
+        topics.put(TopicType.TELEMETRY_SENSORS, "telemetry.sensors.v1");
+        topics.put(TopicType.TELEMETRY_SNAPSHOTS, "telemetry.snapshots.v1");
+        topics.put(TopicType.TELEMETRY_HUBS, "telemetry.hubs.v1");
+        return topics;
+    }
 
-        // батчинг
-        config.put(ProducerConfig.LINGER_MS_CONFIG, 20); // Задержка для батчинга
-        // config.put(ProducerConfig.BATCH_SIZE_CONFIG, 16384); // Размер батча
-        // config.put(ProducerConfig.BUFFER_MEMORY_CONFIG, 33554432); // Размер буфера
-
-        //доставка
-        config.put(ProducerConfig.ACKS_CONFIG, "all"); // Гарантия доставки
-        config.put(ProducerConfig.RETRIES_CONFIG, 3); // Количество повторов
-        // config.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);  // Идемпотентность
-
-        // config.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, 1); // Количество запросов на соединение
-        config.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, 30000); // таймаут одного запроса к брокеру
-        config.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, 60000); // общий таймаут со всеми ретраями
-
-        return config;
+    @Bean
+    public Properties kafkaProducerProperties() {
+        Properties properties = new Properties();
+        properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, GeneralAvroSerializer.class);
+        return properties;
     }
 }

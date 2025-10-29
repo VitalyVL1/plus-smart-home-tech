@@ -1,4 +1,4 @@
-package ru.practicum.model.hub.device_action;
+package ru.practicum.model.hub.device;
 
 public enum DeviceActionType {
     ACTIVATE,

@@ -1,4 +1,4 @@
-package ru.practicum.util;
+package ru.practicum.service.handler.hub;
 
 import ru.practicum.model.hub.HubEvent;
 import ru.practicum.model.hub.HubEventType;

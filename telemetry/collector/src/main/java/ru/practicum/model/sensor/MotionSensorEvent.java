@@ -1,7 +1,6 @@
 package ru.practicum.model.sensor;
 
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -9,9 +8,8 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString(callSuper = true)
+@NotNull
 public class MotionSensorEvent extends SensorEvent {
-    @Min(0)
-    @Max(255)
     private int linkQuality;
     private boolean motion;
     private int voltage;
