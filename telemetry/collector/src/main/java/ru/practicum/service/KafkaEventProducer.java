@@ -1,5 +1,6 @@
 package ru.practicum.service;
 
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -14,12 +15,24 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Properties;
 
+/**
+ * Кастомная реализация KafkaProducer с функцией отправки событий в топики.
+ * Управляет жизненным циклом Kafka producer и автоматически закрывает его при завершении работы приложения.
+ *
+ * @see AutoCloseable
+ */
 @Slf4j
 @Component
 public class KafkaEventProducer implements AutoCloseable {
     protected final KafkaProducer<String, SpecificRecordBase> producer;
     protected final EnumMap<TopicType, String> topics;
 
+    /**
+     * Конструктор класса для создания KafkaProducer
+     * и заполнения всеми известными топиками
+     *
+     * @param kafkaConfig базовая конфигурация Kafka
+     */
     public KafkaEventProducer(KafkaConfig kafkaConfig) {
         topics = kafkaConfig.kafkaTopics();
 
@@ -35,6 +48,10 @@ public class KafkaEventProducer implements AutoCloseable {
 
     /**
      * Отправка события в Kafka
+     *
+     * @param topicType тип топика из enum
+     * @param key       ключ для партицирования
+     * @param event     событие от хаба или датчика
      */
     public <T extends SpecificRecordBase> void sendEvent(TopicType topicType, String key, T event) {
         String topicName = getTopicName(topicType);
@@ -55,6 +72,10 @@ public class KafkaEventProducer implements AutoCloseable {
 
     /**
      * Получение имени топика по типу
+     *
+     * @param topicType тип топика
+     * @return String имя топика
+     * @throws IllegalArgumentException если тип топика неизвестен
      */
     public String getTopicName(TopicType topicType) {
         String topicName = topics.get(topicType);
@@ -66,19 +87,35 @@ public class KafkaEventProducer implements AutoCloseable {
 
     /**
      * Получение всех топиков (для инициализации)
+     *
+     * @return List список всех имен топиков
      */
     public List<String> getAllTopicNames() {
         return new ArrayList<>(topics.values());
     }
 
+    /**
+     * Принудительная отправка всех накопленных сообщений
+     */
     public void flush() {
         producer.flush();
     }
 
+    /**
+     * Закрывает Kafka producer и освобождает ресурсы.
+     * Автоматически вызывается Spring при завершении работы приложения.
+     */
+    @PreDestroy
     @Override
     public void close() {
         if (producer != null) {
-            producer.close();
+            try {
+                log.info("Closing KafkaEventProducer...");
+                producer.close();
+                log.info("KafkaEventProducer closed successfully");
+            } catch (Exception e) {
+                log.error("Error closing KafkaEventProducer", e);
+            }
         }
     }
 

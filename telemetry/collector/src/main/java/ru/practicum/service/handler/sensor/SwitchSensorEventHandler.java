@@ -7,12 +7,37 @@ import ru.practicum.model.sensor.SwitchSensorEvent;
 import ru.practicum.service.KafkaEventProducer;
 import ru.yandex.practicum.kafka.telemetry.event.SwitchSensorAvro;
 
+/**
+ * Обработчик событий переключателей (Switch сенсоров).
+ * Преобразует SwitchSensorEvent в SwitchSensorAvro и отправляет в Kafka топик TELEMETRY_SENSORS.
+ * Обрабатывает данные о состоянии переключателя (включен/выключен).
+ *
+ * @see BaseSensorEventHandler
+ * @see SwitchSensorEvent
+ * @see SwitchSensorAvro
+ * @see SensorEventType#SWITCH_SENSOR_EVENT
+ */
 @Component
 public class SwitchSensorEventHandler extends BaseSensorEventHandler<SwitchSensorAvro> {
+
+    /**
+     * Конструктор обработчика событий переключателей.
+     *
+     * @param producer Kafka продюсер для отправки событий
+     */
     public SwitchSensorEventHandler(KafkaEventProducer producer) {
         super(producer);
     }
 
+    /**
+     * Преобразует SensorEvent в SwitchSensorAvro.
+     * Выполняет маппинг данных переключателя: текущего состояния (включен/выключен).
+     *
+     * @param event событие переключателя, должно быть типа SwitchSensorEvent
+     * @return Avro-представление данных переключателя
+     * @throws ClassCastException       если event не является SwitchSensorEvent
+     * @throws IllegalArgumentException если данные переключателя некорректны
+     */
     @Override
     protected SwitchSensorAvro mapToAvro(SensorEvent event) {
         SwitchSensorEvent _event = (SwitchSensorEvent) event;
@@ -21,6 +46,11 @@ public class SwitchSensorEventHandler extends BaseSensorEventHandler<SwitchSenso
                 .build();
     }
 
+    /**
+     * Возвращает тип обрабатываемого события переключателя.
+     *
+     * @return тип события SWITCH_SENSOR_EVENT
+     */
     @Override
     public SensorEventType getMessageType() {
         return SensorEventType.SWITCH_SENSOR_EVENT;

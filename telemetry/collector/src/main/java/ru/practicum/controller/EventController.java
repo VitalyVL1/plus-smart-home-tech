@@ -1,5 +1,7 @@
 package ru.practicum.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -18,6 +20,10 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+/**
+ * REST контроллер для приема событий телеметрии от IoT устройств.
+ * Поддерживает события от сенсоров и хабов.
+ */
 @Slf4j
 @Validated
 @RestController
@@ -33,8 +39,18 @@ public class EventController {
                 .collect(Collectors.toMap(HubEventHandler::getMessageType, Function.identity()));
     }
 
+    /**
+     * Принимает события от различных типов сенсоров.
+     * Валидирует входные данные и передает на дальнейшую обработку.
+     * Сериализованные данные в бинарной кодировке в формате Avro записываются в Kafka
+     *
+     * @param sensorEvent данные события от сенсора
+     */
     @PostMapping("/sensors")
     @ResponseStatus(HttpStatus.OK)
+    @Operation(summary = "Отправка события сенсора", description = "Принимает события от IoT сенсоров")
+    @ApiResponse(responseCode = "200", description = "Событие успешно принято и обработано")
+    @ApiResponse(responseCode = "400", description = "Неверный формат данных или неизвестный тип сенсора")
     public void collectSensorEvent(@RequestBody @Valid SensorEvent sensorEvent) {
         log.info("collectSensorEvent = {}", sensorEvent);
         SensorEventHandler sensorEventHandler = sensorEventHandlers.get(sensorEvent.getType());
@@ -44,8 +60,18 @@ public class EventController {
         sensorEventHandler.handle(sensorEvent);
     }
 
+    /**
+     * Принимает события от хаба.
+     * Валидирует входные данные и передает на дальнейшую обработку.
+     * Сериализованные данные в бинарной кодировке в формате Avro записываются в Kafka
+     *
+     * @param hubEvent данные события от сенсора
+     */
     @PostMapping("/hubs")
     @ResponseStatus(HttpStatus.OK)
+    @Operation(summary = "Отправка события хаба", description = "Принимает события хаба")
+    @ApiResponse(responseCode = "200", description = "Событие успешно принято и обработано")
+    @ApiResponse(responseCode = "400", description = "Неверный формат данных или неизвестный тип события")
     public void collectHubEvent(@RequestBody @Valid HubEvent hubEvent) {
         log.info("collectHubEvent = {}", hubEvent);
         HubEventHandler hubEventHandler = hubEventHandlers.get(hubEvent.getType());

@@ -8,6 +8,16 @@ import ru.practicum.model.sensor.SensorEvent;
 import ru.practicum.service.KafkaEventProducer;
 import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
 
+/**
+ * Абстрактный базовый класс для обработчиков событий сенсоров.
+ * Предоставляет общую логику преобразования SensorEvent в Avro-формат и отправки в Kafka.
+ *
+ * @param <T> тип Avro-события, реализующий {@link SpecificRecord}, который будет отправлен как payload
+ * @see SensorEventHandler
+ * @see KafkaEventProducer
+ * @see SensorEvent
+ * @see SensorEventAvro
+ */
 @Slf4j
 @RequiredArgsConstructor
 public abstract class BaseSensorEventHandler<T extends SpecificRecord> implements SensorEventHandler {
@@ -15,10 +25,36 @@ public abstract class BaseSensorEventHandler<T extends SpecificRecord> implement
     private final KafkaEventProducer producer;
     private static final TopicType TOPIC_TYPE = TopicType.TELEMETRY_SENSORS;
 
+    /**
+     * Преобразует SensorEvent в соответствующий Avro-объект.
+     * Реализация должна быть предоставлена конкретными классами-наследниками.
+     *
+     * @param event исходное событие сенсора для преобразования
+     * @return Avro-представление события, не должно быть null
+     * @throws IllegalArgumentException если event содержит некорректные данные
+     *                                  для преобразования в целевой Avro-тип
+     */
     protected abstract T mapToAvro(SensorEvent event);
 
+    /**
+     * Обрабатывает событие сенсора: преобразует в Avro-формат и отправляет в Kafka.
+     * <p>
+     * Создает обертку {@link SensorEventAvro} с основными метаданными события и payload,
+     * полученным из {@link #mapToAvro(SensorEvent)}.
+     * Отправляет событие в топик {@link TopicType#TELEMETRY_SENSORS}.
+     * </p>
+     *
+     * @param event событие сенсора для обработки
+     * @throws RuntimeException         если произошла ошибка при отправке события в Kafka
+     * @throws IllegalArgumentException если event равен null
+     * @see #mapToAvro(SensorEvent)
+     */
     @Override
     public void handle(SensorEvent event) {
+        if (event == null) {
+            throw new IllegalArgumentException("SensorEvent cannot be null");
+        }
+
         T avroEvent = mapToAvro(event);
 
         SensorEventAvro sensorEventAvro = SensorEventAvro.newBuilder()
@@ -33,13 +69,6 @@ public abstract class BaseSensorEventHandler<T extends SpecificRecord> implement
         } catch (Exception e) {
             log.error("Error processing SensorEvent. SensorEventAvro: {}", sensorEventAvro, e);
             throw new RuntimeException("Failed to process SensorEvent", e);
-        }
-    }
-
-    // Метод для закрытия producer
-    public void shutdown() {
-        if (producer != null) {
-            producer.close();
         }
     }
 }
