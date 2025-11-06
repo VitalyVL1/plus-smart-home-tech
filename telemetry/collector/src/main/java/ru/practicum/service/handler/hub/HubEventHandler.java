@@ -1,15 +1,14 @@
 package ru.practicum.service.handler.hub;
 
-import ru.practicum.model.hub.HubEvent;
-import ru.practicum.model.hub.HubEventType;
+import ru.yandex.practicum.grpc.telemetry.event.HubEventProto;
 
 /**
  * Интерфейс для обработчиков событий хаба.
  * Определяет контракт для классов, обрабатывающих различные типы событий, происходящих в хабе.
- * Каждая реализация должна обрабатывать конкретный тип события {@link HubEventType}.
+ * Каждая реализация должна обрабатывать конкретный тип события {@link HubEventProto.PayloadCase}.
  *
- * @see HubEvent
- * @see HubEventType
+ * @see HubEventProto
+ * @see HubEventProto.PayloadCase
  */
 public interface HubEventHandler {
 
@@ -19,7 +18,7 @@ public interface HubEventHandler {
      *
      * @return HubEventType, не должен быть null
      */
-    HubEventType getMessageType();
+    HubEventProto.PayloadCase getMessageType();
 
     /**
      * Обрабатывает событие хаба.
@@ -29,5 +28,5 @@ public interface HubEventHandler {
      * @throws IllegalArgumentException если event равен null
      * @throws RuntimeException         если произошла ошибка при обработке события
      */
-    void handle(HubEvent event);
+    void handle(HubEventProto event);
 }
