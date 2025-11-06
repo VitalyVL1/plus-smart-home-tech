@@ -1,20 +1,21 @@
 package ru.practicum.service.handler.hub;
 
 import org.springframework.stereotype.Component;
-import ru.practicum.model.hub.HubEvent;
-import ru.practicum.model.hub.HubEventType;
-import ru.practicum.model.hub.device.DeviceAddedEvent;
 import ru.practicum.service.KafkaEventProducer;
 import ru.practicum.service.mapper.EnumMapper;
+import ru.yandex.practicum.grpc.telemetry.event.DeviceAddedEventProto;
+import ru.yandex.practicum.grpc.telemetry.event.HubEventProto;
 import ru.yandex.practicum.kafka.telemetry.event.DeviceAddedEventAvro;
 import ru.yandex.practicum.kafka.telemetry.event.DeviceTypeAvro;
 
+import static ru.yandex.practicum.grpc.telemetry.event.HubEventProto.PayloadCase.DEVICE_ADDED;
+
 /**
  * Обработчик событий добавления новых устройств в хаб.
- * Преобразует DeviceAddedEvent в DeviceAddedEventAvro и отправляет в Kafka топик TELEMETRY_HUBS.
+ * Преобразует DeviceAddedEventProto в DeviceAddedEventAvro и отправляет в Kafka топик TELEMETRY_HUBS.
  *
  * @see BaseHubEventHandler
- * @see DeviceAddedEvent
+ * @see DeviceAddedEventProto
  * @see DeviceAddedEventAvro
  */
 @Component
@@ -30,19 +31,22 @@ public class DeviceAddedEventHandler extends BaseHubEventHandler<DeviceAddedEven
     }
 
     /**
-     * Преобразует HubEvent в DeviceAddedEventAvro.
+     * Преобразует HubEventProto в DeviceAddedEventAvro.
      *
-     * @param event событие добавления устройства, должно быть типа DeviceAddedEvent
+     * @param event событие добавления устройства, должно быть типа DeviceAddedEventProto
      * @return DeviceAddedEventAvro Avro-представление события добавления устройства
-     * @throws ClassCastException если event не является DeviceAddedEvent
      */
     @Override
-    protected DeviceAddedEventAvro mapToAvro(HubEvent event) {
-        DeviceAddedEvent _event = (DeviceAddedEvent) event;
-        return DeviceAddedEventAvro.newBuilder()
-                .setId(_event.getId())
-                .setType(EnumMapper.map(_event.getDeviceType(), DeviceTypeAvro.class))
-                .build();
+    protected DeviceAddedEventAvro mapToAvro(HubEventProto event) {
+        if (event.getPayloadCase() == DEVICE_ADDED) {
+            DeviceAddedEventProto deviceAdded = event.getDeviceAdded();
+            return DeviceAddedEventAvro.newBuilder()
+                    .setId(deviceAdded.getId())
+                    .setType(EnumMapper.map(deviceAdded.getType(), DeviceTypeAvro.class))
+                    .build();
+        } else {
+            throw new IllegalArgumentException("Expected DEVICE_ADDED event type");
+        }
     }
 
     /**
@@ -51,7 +55,7 @@ public class DeviceAddedEventHandler extends BaseHubEventHandler<DeviceAddedEven
      * @return тип события DEVICE_ADDED
      */
     @Override
-    public HubEventType getMessageType() {
-        return HubEventType.DEVICE_ADDED;
+    public HubEventProto.PayloadCase getMessageType() {
+        return DEVICE_ADDED;
     }
 }
