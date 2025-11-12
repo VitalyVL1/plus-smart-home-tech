@@ -7,6 +7,19 @@ grpc:
 spring:
   kafka:
     bootstrap-servers: localhost:9092
+  application:
+    name: collectorApp
+
+kafka:
+  producer-properties:
+    bootstrap.servers: localhost:9092
+    key.serializer: org.apache.kafka.common.serialization.StringSerializer
+    value.serializer: ru.practicum.GeneralAvroSerializer
+
+  topics:
+    TELEMETRY_SENSORS: telemetry.sensors.v1
+    TELEMETRY_SNAPSHOTS: telemetry.snapshots.v1
+    TELEMETRY_HUBS: telemetry.hubs.v1
 
 logging:
   level:

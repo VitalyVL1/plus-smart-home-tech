@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.specific.SpecificRecord;
 import ru.practicum.config.TopicType;
-import ru.practicum.model.hub.HubEvent;
 import ru.practicum.service.KafkaEventProducer;
 import ru.yandex.practicum.grpc.telemetry.event.HubEventProto;
 import ru.yandex.practicum.kafka.telemetry.event.HubEventAvro;
@@ -18,7 +17,6 @@ import static ru.practicum.util.Converter.timestampToInstant;
  * @param <T> тип Avro-события, реализующий {@link SpecificRecord}, который будет отправлен как payload
  * @see HubEventHandler
  * @see KafkaEventProducer
- * @see HubEvent
  * @see HubEventAvro
  */
 @Slf4j
