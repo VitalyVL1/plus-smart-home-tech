@@ -1,0 +1,32 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: aggregatorApp
+
+kafka:
+  producer-properties:
+    bootstrap.servers: localhost:9092
+    key.serializer: org.apache.kafka.common.serialization.StringSerializer
+    value.serializer: ru.practicum.GeneralAvroSerializer
+
+  consumer-properties:
+    bootstrap.servers: localhost:9092
+    group.id: snapshot-aggregator-group
+    key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    value.deserializer: ru.practicum.SensorEventDeserializer
+    auto.offset.reset: earliest
+    enable.auto.commit: false
+
+  topics:
+    TELEMETRY_SENSORS: telemetry.sensors.v1
+    TELEMETRY_SNAPSHOTS: telemetry.snapshots.v1
+    TELEMETRY_HUBS: telemetry.hubs.v1
+
+logging:
+  level:
+    # Для обработчика
+    ru.practicum.service: DEBUG
+    # Для Spring
+    org.springframework: INFO

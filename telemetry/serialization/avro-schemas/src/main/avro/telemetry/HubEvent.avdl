@@ -9,60 +9,42 @@ protocol HubEventProtocol {
 	 * Типы устройств, поддерживаемых системой.
 	 */
 	enum DeviceTypeAvro {
-		/** Датчик движения */
-		MOTION_SENSOR,
-		/** Температурный датчик */
-		TEMPERATURE_SENSOR,
-		/** Датчик освещенности */
-		LIGHT_SENSOR,
-		/** Климатический датчик (температура, влажность, CO2) */
-		CLIMATE_SENSOR,
-		/** Переключатель/выключатель */
-		SWITCH_SENSOR
+		MOTION_SENSOR, // Датчик движения
+		TEMPERATURE_SENSOR, // Температурный датчик
+		LIGHT_SENSOR, // Датчик освещенности
+		CLIMATE_SENSOR, // Климатический датчик (температура, влажность, CO2)
+		SWITCH_SENSOR// Переключатель/выключатель
 	}
 
 	/**
 	 * Типы условий для триггеров сценариев автоматизации.
 	 */
 	enum ConditionTypeAvro {
-		/** Обнаружение движения */
-		MOTION,
-		/** Уровень освещенности */
-		LUMINOSITY,
-		/** Состояние переключателя */
-		SWITCH,
-		/** Температура */
-		TEMPERATURE,
-		/** Уровень CO2 */
-		CO2LEVEL,
-		/** Влажность воздуха */
-		HUMIDITY
+		MOTION, // Обнаружение движения
+		LUMINOSITY, // Уровень освещенности
+		SWITCH, // Состояние переключателя
+		TEMPERATURE, // Температура
+		CO2LEVEL, // Уровень CO2
+		HUMIDITY// Влажность воздуха
 	}
 
 	/**
 	 * Операции сравнения для условий сценариев.
 	 */
 	enum ConditionOperationAvro {
-		/** Равно */
-		EQUALS,
-		/** Больше чем */
-		GREATER_THAN,
-		/** Меньше чем */
-		LOWER_THAN
+		EQUALS, // Равно
+		GREATER_THAN, // Больше чем
+		LOWER_THAN// Меньше чем
 	}
 
 	/**
 	 * Типы действий для сценариев автоматизации.
 	 */
 	enum ActionTypeAvro {
-		/** Активировать устройство */
-		ACTIVATE,
-		/** Деактивировать устройство */
-		DEACTIVATE,
-		/** Инвертировать текущее состояние */
-		INVERSE,
-		/** Установить конкретное значение */
-		SET_VALUE
+		ACTIVATE, // Активировать устройство
+		DEACTIVATE, // Деактивировать устройство
+		INVERSE, // Инвертировать текущее состояние
+		SET_VALUE// Установить конкретное значение
 	}
 
 	/**
@@ -73,7 +55,6 @@ protocol HubEventProtocol {
 		 * Уникальный идентификатор устройства.
 		 */
 		string id;
-
 		/**
 		 * Тип добавляемого устройства.
 		 */
@@ -99,17 +80,14 @@ protocol HubEventProtocol {
 		 * Идентификатор датчика, от которого ожидается условие.
 		 */
 		string sensor_id;
-
 		/**
 		 * Тип условия (какой параметр проверяется).
 		 */
 		ConditionTypeAvro type;
-
 		/**
 		 * Операция сравнения для условия.
 		 */
 		ConditionOperationAvro operation;
-
 		/**
 		 * Значение для сравнения.
 		 * Может быть целым числом, булевым значением или null в зависимости от типа условия.
@@ -127,12 +105,10 @@ protocol HubEventProtocol {
 		 * Идентификатор устройства, над которым выполняется действие.
 		 */
 		string sensor_id;
-
 		/**
 		 * Тип выполняемого действия.
 		 */
 		ActionTypeAvro type;
-
 		/**
 		 * Значение для действия (опционально).
 		 * Используется только для действия SET_VALUE.
@@ -149,13 +125,11 @@ protocol HubEventProtocol {
 		 * Уникальное имя сценария.
 		 */
 		string name;
-
 		/**
 		 * Массив условий, которые должны выполниться для активации сценария.
 		 * Все условия должны выполниться одновременно (логическое И).
 		 */
 		array<ScenarioConditionAvro> conditions;
-
 		/**
 		 * Массив действий, которые выполняются при активации сценария.
 		 * Действия выполняются в порядке их следования в массиве.
@@ -182,20 +156,18 @@ protocol HubEventProtocol {
 		 * Идентификатор концентратора, от которого поступило событие.
 		 */
 		string hub_id;
-
 		/**
 		 * Временная метка события.
 		 * Время в миллисекундах с эпохи Unix.
 		 */
 		timestamp_ms timestamp;
-
 		/**
 		 * Полезная нагрузка события.
 		 * Содержит специфические данные в зависимости от типа события.
 		 * Может быть одного из типов: DeviceAddedEventAvro, DeviceRemovedEventAvro,
 		 * ScenarioAddedEventAvro или ScenarioRemovedEventAvro.
 		 */
-		union {
+		union{
 			DeviceAddedEventAvro,
 			DeviceRemovedEventAvro,
 			ScenarioAddedEventAvro,

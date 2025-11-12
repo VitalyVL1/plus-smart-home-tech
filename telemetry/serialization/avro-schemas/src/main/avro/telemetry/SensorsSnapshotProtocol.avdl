@@ -19,14 +19,12 @@ protocol SensorsSnapshotProtocol {
 		 * Уникальный идентификатор устройства-концентратора, к которому подключены датчики.
 		 */
 		string hubId;
-
 		/**
 		 * Временная метка создания снимка.
 		 * Время в миллисекундах с эпохи Unix, когда был сделан снапшот.
 		 * Определяет момент времени, на который актуальны все состояния датчиков.
 		 */
 		timestamp_ms timestamp;
-
 		/**
 		 * Карта состояний датчиков.
 		 * Ключ - уникальный идентификатор датчика (string).
@@ -47,7 +45,6 @@ protocol SensorsSnapshotProtocol {
 		 * Позволяет определить актуальность данных датчика.
 		 */
 		timestamp_ms timestamp;
-
 		/**
 		 * Показания датчика.
 		 * Содержит специфические данные в зависимости от типа датчика.
@@ -55,7 +52,7 @@ protocol SensorsSnapshotProtocol {
 		 * MotionSensorAvro, SwitchSensorAvro или TemperatureSensorAvro.
 		 * Соответствует структурам данных из протокола SensorEventProtocol.
 		 */
-		union {
+		union{
 			ClimateSensorAvro,
 			LightSensorAvro,
 			MotionSensorAvro,
