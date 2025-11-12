@@ -50,6 +50,24 @@ public class KafkaConfig {
     private Properties producerProperties;
 
     /**
+     * Настройки Kafka консьюмера.
+     * Содержит свойства для конфигурации экземпляра {@link org.apache.kafka.clients.consumer.KafkaConsumer}.
+     *
+     * <p>Общие настройки включают:
+     * <ul>
+     *   <li>{@code bootstrap.servers} - адреса брокеров Kafka</li>
+     *   <li>{@code group.id} - идентификатор потребительской группы</li>
+     *   <li>{@code key.deserializer} - десериализатор для ключей сообщений</li>
+     *   <li>{@code value.deserializer} - десериализатор для значений сообщений</li>
+     *   <li>{@code auto.offset.reset} - стратегия при отсутствии оффсета</li>
+     *   <li>{@code enable.auto.commit} - автоматическое подтверждение сообщений</li>
+     * </ul>
+     *
+     * @see org.apache.kafka.clients.consumer.ConsumerConfig
+     */
+    private Properties consumerProperties;
+
+    /**
      * Устанавливает соответствие между строковыми ключами топиков из конфигурации
      * и перечислением {@link TopicType}.
      *
