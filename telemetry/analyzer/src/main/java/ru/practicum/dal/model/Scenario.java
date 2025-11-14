@@ -11,7 +11,7 @@ import java.util.Map;
 @Table(name = "scenarios")
 @Getter
 @Setter
-@Builder
+@Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
@@ -39,6 +39,7 @@ public class Scenario {
             inverseJoinColumns = @JoinColumn(name = "condition_id")
     )
     @ToString.Exclude
+    @Builder.Default
     private Map<Sensor, Condition> sensorConditions = new HashMap<>();
 
     @OneToMany(cascade = CascadeType.ALL)
@@ -49,7 +50,8 @@ public class Scenario {
             inverseJoinColumns = @JoinColumn(name = "action_id")
     )
     @ToString.Exclude
-    private Map<Sensor, Action> sensorActions;
+    @Builder.Default
+    private Map<Sensor, Action> sensorActions = new HashMap<>();
 
     public void addSensorCondition(Sensor sensor, Condition condition) {
         sensorConditions.put(sensor, condition);

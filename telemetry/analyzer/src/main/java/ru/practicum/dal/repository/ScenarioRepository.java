@@ -1,5 +1,6 @@
 package ru.practicum.dal.repository;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import ru.practicum.dal.model.Scenario;
 
@@ -8,5 +9,9 @@ import java.util.Optional;
 
 public interface ScenarioRepository extends JpaRepository<Scenario, Long> {
     List<Scenario> findByHubId(String hubId);
+
+    @EntityGraph(attributePaths = {"sensorConditions", "sensorActions"})
     Optional<Scenario> findByHubIdAndName(String hubId, String name);
+
+    void deleteByHubIdAndName(String hubId, String name);
 }

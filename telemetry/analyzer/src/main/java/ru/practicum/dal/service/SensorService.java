@@ -4,7 +4,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.dal.model.Sensor;
+import ru.practicum.dal.model.mapper.SensorMapper;
 import ru.practicum.dal.repository.SensorRepository;
+import ru.yandex.practicum.kafka.telemetry.event.DeviceAddedEventAvro;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -16,14 +18,14 @@ public class SensorService {
     private final SensorRepository sensorRepository;
 
     @Transactional
-    public Sensor save(Sensor sensor) {
+    public Sensor save(String hubId, DeviceAddedEventAvro deviceAvro) {
+        Sensor sensor = SensorMapper.mapSensor(hubId, deviceAvro.getId());
         return sensorRepository.save(sensor);
     }
 
     @Transactional
-    public Sensor delete(Sensor sensor) {
-        sensorRepository.delete(sensor);
-        return sensor;
+    public void deleteBySensorIdAndHubId(String sensorId, String hubId) {
+        sensorRepository.deleteBySensorIdAndHubId(sensorId, hubId);
     }
 
     public boolean existsByIdInAndHubId(Collection<String> ids, String hubId) {
