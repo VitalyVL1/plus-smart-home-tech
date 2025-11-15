@@ -9,7 +9,9 @@ import org.apache.kafka.common.errors.WakeupException;
 import org.springframework.stereotype.Component;
 import ru.practicum.config.KafkaConfig;
 import ru.practicum.config.TopicType;
-import ru.practicum.dal.model.*;
+import ru.practicum.dal.model.Condition;
+import ru.practicum.dal.model.ConditionType;
+import ru.practicum.dal.model.Scenario;
 import ru.practicum.dal.service.ScenarioService;
 import ru.yandex.practicum.kafka.telemetry.event.*;
 
