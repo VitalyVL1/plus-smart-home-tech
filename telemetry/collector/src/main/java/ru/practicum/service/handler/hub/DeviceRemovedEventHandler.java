@@ -1,18 +1,19 @@
 package ru.practicum.service.handler.hub;
 
 import org.springframework.stereotype.Component;
-import ru.practicum.model.hub.HubEvent;
-import ru.practicum.model.hub.HubEventType;
-import ru.practicum.model.hub.device.DeviceRemovedEvent;
 import ru.practicum.service.KafkaEventProducer;
+import ru.yandex.practicum.grpc.telemetry.event.DeviceRemovedEventProto;
+import ru.yandex.practicum.grpc.telemetry.event.HubEventProto;
 import ru.yandex.practicum.kafka.telemetry.event.DeviceRemovedEventAvro;
+
+import static ru.yandex.practicum.grpc.telemetry.event.HubEventProto.PayloadCase.DEVICE_REMOVED;
 
 /**
  * Обработчик событий удаления устройств из хаба.
- * Преобразует DeviceRemovedEvent в Avro-формат и отправляет в Kafka топик TELEMETRY_HUBS.
+ * Преобразует DeviceRemovedEventProto в Avro-формат и отправляет в Kafka топик TELEMETRY_HUBS.
  *
  * @see BaseHubEventHandler
- * @see DeviceRemovedEvent
+ * @see DeviceRemovedEventProto
  * @see DeviceRemovedEventAvro
  */
 @Component
@@ -27,18 +28,21 @@ public class DeviceRemovedEventHandler extends BaseHubEventHandler<DeviceRemoved
     }
 
     /**
-     * Преобразует HubEvent в DeviceRemovedEventAvro.
+     * Преобразует HubEventProto в DeviceRemovedEventAvro.
      *
      * @param event событие удаления устройства, должно быть типа DeviceRemovedEvent
      * @return Avro-представление события удаления устройства
-     * @throws ClassCastException если event не является DeviceRemovedEvent
      */
     @Override
-    protected DeviceRemovedEventAvro mapToAvro(HubEvent event) {
-        DeviceRemovedEvent _event = (DeviceRemovedEvent) event;
-        return DeviceRemovedEventAvro.newBuilder()
-                .setId(_event.getId())
-                .build();
+    protected DeviceRemovedEventAvro mapToAvro(HubEventProto event) {
+        if (event.getPayloadCase() == DEVICE_REMOVED) {
+            DeviceRemovedEventProto deviceRemoved = event.getDeviceRemoved();
+            return DeviceRemovedEventAvro.newBuilder()
+                    .setId(deviceRemoved.getId())
+                    .build();
+        } else {
+            throw new IllegalArgumentException("Expected DEVICE_REMOVED event type");
+        }
     }
 
     /**
@@ -47,7 +51,7 @@ public class DeviceRemovedEventHandler extends BaseHubEventHandler<DeviceRemoved
      * @return тип события DEVICE_REMOVED
      */
     @Override
-    public HubEventType getMessageType() {
-        return HubEventType.DEVICE_REMOVED;
+    public HubEventProto.PayloadCase getMessageType() {
+        return DEVICE_REMOVED;
     }
 }

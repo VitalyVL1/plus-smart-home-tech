@@ -1,19 +1,20 @@
 package ru.practicum.service.handler.hub;
 
 import org.springframework.stereotype.Component;
-import ru.practicum.model.hub.HubEvent;
-import ru.practicum.model.hub.HubEventType;
-import ru.practicum.model.hub.scenario.ScenarioRemovedEvent;
 import ru.practicum.service.KafkaEventProducer;
+import ru.yandex.practicum.grpc.telemetry.event.HubEventProto;
+import ru.yandex.practicum.grpc.telemetry.event.ScenarioRemovedEventProto;
 import ru.yandex.practicum.kafka.telemetry.event.ScenarioRemovedEventAvro;
+
+import static ru.yandex.practicum.grpc.telemetry.event.HubEventProto.PayloadCase.SCENARIO_REMOVED;
 
 /**
  * Обработчик событий удаления сценариев из хаба.
- * Преобразует ScenarioRemovedEvent в Avro-формат и отправляет в Kafka топик TELEMETRY_HUBS.
+ * Преобразует ScenarioRemovedEventProto в Avro-формат и отправляет в Kafka топик TELEMETRY_HUBS.
  * Событие удаления сценария содержит информацию об имени удаляемого сценария.
  *
  * @see BaseHubEventHandler
- * @see ScenarioRemovedEvent
+ * @see ScenarioRemovedEventProto
  * @see ScenarioRemovedEventAvro
  */
 @Component
@@ -29,19 +30,22 @@ public class ScenarioRemovedEventHandler extends BaseHubEventHandler<ScenarioRem
     }
 
     /**
-     * Преобразует HubEvent в ScenarioRemovedEventAvro.
+     * Преобразует HubEventProto в ScenarioRemovedEventAvro.
      * Создает Avro-представление события удаления сценария на основе имени сценария.
      *
-     * @param event событие удаления сценария, должно быть типа ScenarioRemovedEvent
+     * @param event событие удаления сценария, должно быть типа ScenarioRemovedEventProto
      * @return Avro-представление события удаления сценария
-     * @throws ClassCastException если event не является ScenarioRemovedEvent
      */
     @Override
-    protected ScenarioRemovedEventAvro mapToAvro(HubEvent event) {
-        ScenarioRemovedEvent _event = (ScenarioRemovedEvent) event;
-        return ScenarioRemovedEventAvro.newBuilder()
-                .setName(_event.getName())
-                .build();
+    protected ScenarioRemovedEventAvro mapToAvro(HubEventProto event) {
+        if (event.getPayloadCase() == SCENARIO_REMOVED) {
+            ScenarioRemovedEventProto scenarioRemoved = event.getScenarioRemoved();
+            return ScenarioRemovedEventAvro.newBuilder()
+                    .setName(scenarioRemoved.getName())
+                    .build();
+        } else {
+            throw new IllegalArgumentException("Expected SCENARIO_REMOVED event type");
+        }
     }
 
     /**
@@ -50,7 +54,7 @@ public class ScenarioRemovedEventHandler extends BaseHubEventHandler<ScenarioRem
      * @return тип события SCENARIO_REMOVED
      */
     @Override
-    public HubEventType getMessageType() {
-        return HubEventType.SCENARIO_REMOVED;
+    public HubEventProto.PayloadCase getMessageType() {
+        return SCENARIO_REMOVED;
     }
 }

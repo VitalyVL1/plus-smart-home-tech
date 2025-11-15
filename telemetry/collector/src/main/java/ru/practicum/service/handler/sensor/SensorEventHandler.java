@@ -1,16 +1,15 @@
 package ru.practicum.service.handler.sensor;
 
-import ru.practicum.model.sensor.SensorEvent;
-import ru.practicum.model.sensor.SensorEventType;
+import ru.yandex.practicum.grpc.telemetry.event.SensorEventProto;
 
 /**
  * Интерфейс для обработчиков событий сенсоров.
  * Определяет контракт для классов, обрабатывающих различные типы событий, поступающих от сенсоров.
- * Каждая реализация должна обрабатывать конкретный тип события {@link SensorEventType} и преобразовывать
+ * Каждая реализация должна обрабатывать конкретный тип события {@link SensorEventProto.PayloadCase} и преобразовывать
  * данные сенсоров в соответствующий Avro-формат для отправки в Kafka.
  *
- * @see SensorEvent
- * @see SensorEventType
+ * @see SensorEventProto
+ * @see SensorEventProto.PayloadCase
  * @see BaseSensorEventHandler
  */
 public interface SensorEventHandler {
@@ -21,7 +20,7 @@ public interface SensorEventHandler {
      *
      * @return тип события сенсора, не должен быть null
      */
-    SensorEventType getMessageType();
+    SensorEventProto.PayloadCase getMessageType();
 
     /**
      * Обрабатывает событие сенсора.
@@ -32,5 +31,5 @@ public interface SensorEventHandler {
      * @throws IllegalArgumentException если event равен null или содержит некорректные данные
      * @throws RuntimeException         если произошла ошибка при обработке события или отправке в Kafka
      */
-    void handle(SensorEvent event);
+    void handle(SensorEventProto event);
 }

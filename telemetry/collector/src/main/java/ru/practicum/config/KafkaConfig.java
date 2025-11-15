@@ -1,60 +1,78 @@
 package ru.practicum.config;
 
-import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.common.serialization.StringSerializer;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import ru.practicum.GeneralAvroSerializer;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.util.EnumMap;
+import java.util.Map;
 import java.util.Properties;
 
 /**
- * Конфигурационный класс для настройки Kafka.
- * Предоставляет бины для работы с топиками Kafka и настройками продюсера.
- * Содержит маппинг типов топиков на их фактические имена и базовую конфигурацию KafkaProducer.
+ * Конфигурационный класс для настройки Kafka клиентов.
+ * Связывает свойства из конфигурационных файлов (application.yml/properties)
+ * с Java объектами для работы с Apache Kafka.
  *
  * @see TopicType
+ * @see org.apache.kafka.clients.producer.ProducerConfig
+ * @see org.apache.kafka.clients.consumer.ConsumerConfig
  */
-@Configuration
+@Getter
+@Setter
+@ToString
+@ConfigurationProperties("kafka")
+@Slf4j
 public class KafkaConfig {
-    @Value("${spring.kafka.bootstrap-servers:localhost:9092}")
-    private String bootstrapServers;
-
     /**
-     * Создает маппинг типов топиков на их фактические имена в Kafka.
-     * Используется для маршрутизации событий в соответствующие топики.
+     * Карта соответствия типов топиков их фактическим названиям в Kafka.
+     * Ключ - перечисление {@link TopicType}, значение - строковое название топика.
      *
-     * @return EnumMap, связывающая каждый тип топика с его именем
+     * <p>Инициализируется через метод {@link #setTopics(Map)} при загрузке конфигурации.
+     *
      * @see TopicType
      */
-    @Bean
-    public EnumMap<TopicType, String> kafkaTopics() {
-        EnumMap<TopicType, String> topics = new EnumMap<>(TopicType.class);
-        topics.put(TopicType.TELEMETRY_SENSORS, "telemetry.sensors.v1");
-        topics.put(TopicType.TELEMETRY_SNAPSHOTS, "telemetry.snapshots.v1");
-        topics.put(TopicType.TELEMETRY_HUBS, "telemetry.hubs.v1");
-        return topics;
-    }
+    private EnumMap<TopicType, String> topics;
+    /**
+     * Настройки Kafka продюсера.
+     * Содержит свойства для конфигурации экземпляра {@link org.apache.kafka.clients.producer.KafkaProducer}.
+     *
+     * <p>Общие настройки включают:
+     * <ul>
+     *   <li>{@code bootstrap.servers} - адреса брокеров Kafka</li>
+     *   <li>{@code key.serializer} - сериализатор для ключей сообщений</li>
+     *   <li>{@code value.serializer} - сериализатор для значений сообщений</li>
+     * </ul>
+     *
+     * @see org.apache.kafka.clients.producer.ProducerConfig
+     */
+    private Properties producerProperties;
 
     /**
-     * Создает базовую конфигурацию для KafkaProducer.
-     * Настраивает основные параметры: серверы, сериализаторы ключей и значений.
-     * Дополнительные настройки (такие как лимиты, таймауты, ретраи) могут быть добавлены
-     * в конкретных реализациях продюсера.
+     * Устанавливает соответствие между строковыми ключами топиков из конфигурации
+     * и перечислением {@link TopicType}.
      *
-     * @return Properties с базовой конфигурацией KafkaProducer
-     * @see ProducerConfig
-     * @see StringSerializer
-     * @see GeneralAvroSerializer
+     * <p>Метод преобразует входную Map<String, String> в EnumMap<TopicType, String>,
+     * где ключи конвертируются в значения перечисления {@link TopicType}.
+     *
+     * <p>Если ключ из конфигурации не соответствует ни одному значению {@link TopicType},
+     * выводится предупреждение в лог и такой топик игнорируется.
+     *
+     * @param topics Map где ключ - строковое представление {@link TopicType},
+     *               значение - название топика в Kafka
+     * @throws IllegalArgumentException если ключ не соответствует {@link TopicType}
+     *
      */
-    @Bean
-    public Properties kafkaProducerProperties() {
-        Properties properties = new Properties();
-        properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, GeneralAvroSerializer.class);
-        return properties;
+    public void setTopics(Map<String, String> topics) {
+        this.topics = new EnumMap<>(TopicType.class);
+        for (Map.Entry<String, String> entry : topics.entrySet()) {
+            try {
+                this.topics.put(TopicType.valueOf(entry.getKey()), entry.getValue());
+            } catch (IllegalArgumentException e) {
+                log.warn("Invalid topic name {}", entry.getKey(), e);
+            }
+        }
     }
 }
+

@@ -1,21 +1,22 @@
 package ru.practicum.service.handler.hub;
 
 import org.springframework.stereotype.Component;
-import ru.practicum.model.hub.HubEvent;
-import ru.practicum.model.hub.HubEventType;
-import ru.practicum.model.hub.scenario.ScenarioAddedEvent;
 import ru.practicum.service.KafkaEventProducer;
 import ru.practicum.service.mapper.DeviceActionMapper;
 import ru.practicum.service.mapper.ScenarioConditionMapper;
+import ru.yandex.practicum.grpc.telemetry.event.HubEventProto;
+import ru.yandex.practicum.grpc.telemetry.event.ScenarioAddedEventProto;
 import ru.yandex.practicum.kafka.telemetry.event.ScenarioAddedEventAvro;
+
+import static ru.yandex.practicum.grpc.telemetry.event.HubEventProto.PayloadCase.SCENARIO_ADDED;
 
 /**
  * Обработчик событий добавления новых сценариев в хаб.
- * Преобразует ScenarioAddedEvent в Avro-формат и отправляет в Kafka топик TELEMETRY_HUBS.
+ * Преобразует ScenarioAddedEventProto в Avro-формат и отправляет в Kafka топик TELEMETRY_HUBS.
  * Сценарий включает в себя набор действий устройств и условий их выполнения.
  *
  * @see BaseHubEventHandler
- * @see ScenarioAddedEvent
+ * @see ScenarioAddedEventProto
  * @see ScenarioAddedEventAvro
  * @see DeviceActionMapper
  * @see ScenarioConditionMapper
@@ -33,21 +34,24 @@ public class ScenarioAddedEventHandler extends BaseHubEventHandler<ScenarioAdded
     }
 
     /**
-     * Преобразует HubEvent в ScenarioAddedEventAvro.
+     * Преобразует HubEventProto в ScenarioAddedEventAvro.
      * Выполняет маппинг действий устройств и условий сценария с использованием соответствующих мапперов.
      *
-     * @param event событие добавления сценария, должно быть типа ScenarioAddedEvent
+     * @param event событие добавления сценария, должно быть типа ScenarioAddedEventProto
      * @return Avro-представление события добавления сценария
-     * @throws ClassCastException если event не является ScenarioAddedEvent
      */
     @Override
-    protected ScenarioAddedEventAvro mapToAvro(HubEvent event) {
-        ScenarioAddedEvent _event = (ScenarioAddedEvent) event;
-        return ScenarioAddedEventAvro.newBuilder()
-                .setActions(DeviceActionMapper.map(_event.getActions()))
-                .setConditions(ScenarioConditionMapper.map(_event.getConditions()))
-                .setName(_event.getName())
-                .build();
+    protected ScenarioAddedEventAvro mapToAvro(HubEventProto event) {
+        if (event.getPayloadCase() == SCENARIO_ADDED) {
+            ScenarioAddedEventProto scenarioAdded = event.getScenarioAdded();
+            return ScenarioAddedEventAvro.newBuilder()
+                    .setActions(DeviceActionMapper.fromProto(scenarioAdded.getActionList()))
+                    .setConditions(ScenarioConditionMapper.fromProto(scenarioAdded.getConditionList()))
+                    .setName(scenarioAdded.getName())
+                    .build();
+        } else {
+            throw new IllegalArgumentException("Expected SCENARIO_ADDED event type");
+        }
     }
 
     /**
@@ -56,7 +60,7 @@ public class ScenarioAddedEventHandler extends BaseHubEventHandler<ScenarioAdded
      * @return тип события SCENARIO_ADDED
      */
     @Override
-    public HubEventType getMessageType() {
-        return HubEventType.SCENARIO_ADDED;
+    public HubEventProto.PayloadCase getMessageType() {
+        return SCENARIO_ADDED;
     }
 }
