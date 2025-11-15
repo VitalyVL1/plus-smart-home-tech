@@ -7,8 +7,18 @@ import ru.yandex.practicum.grpc.telemetry.event.DeviceActionProto;
 
 import java.util.Arrays;
 
+/**
+ * Маппер для конвертации Action в gRPC-сообщения.
+ */
 @Slf4j
 public class ActionMapper {
+    /**
+     * Конвертирует Action в DeviceActionProto.
+     *
+     * @param sensorId ID сенсора (не null)
+     * @param action   действие для конвертации (не null)
+     * @return gRPC-сообщение или null при ошибке конвертации
+     */
     public static DeviceActionProto toDeviceActionProto(String sensorId, Action action) {
         if (action == null || sensorId == null) {
             return null;

@@ -15,6 +15,10 @@ import ru.yandex.practicum.kafka.telemetry.event.*;
 import java.time.Duration;
 import java.util.List;
 
+/**
+ * Обработчик событий от хабов умного дома.
+ * Читает события из Kafka и делегирует обработку соответствующим сервисам.
+ */
 @Slf4j
 @Component
 public class HubEventProcessor implements Runnable {
@@ -31,6 +35,10 @@ public class HubEventProcessor implements Runnable {
         this.scenarioService = scenarioService;
     }
 
+    /**
+     * Основной метод обработки событий.
+     * Подписывается на топик Kafka и обрабатывает события в бесконечном цикле.
+     */
     @Override
     public void run() {
         log.info("HubEventProcessor started");
@@ -71,6 +79,12 @@ public class HubEventProcessor implements Runnable {
         }
     }
 
+    /**
+     * Обрабатывает одно событие от хаба.
+     * Определяет тип события и делегирует обработку соответствующему сервису.
+     *
+     * @param record запись из Kafka с событием хаба
+     */
     private void hubAction(ConsumerRecord<String, HubEventAvro> record) {
         HubEventAvro hubEventAvro = record.value();
         String hubId = hubEventAvro.getHubId();

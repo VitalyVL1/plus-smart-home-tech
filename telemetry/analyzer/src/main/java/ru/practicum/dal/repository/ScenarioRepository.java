@@ -7,13 +7,38 @@ import ru.practicum.dal.model.Scenario;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Репозиторий для работы со сценариями в базе данных.
+ * Предоставляет методы для поиска и управления сценариями.
+ */
 public interface ScenarioRepository extends JpaRepository<Scenario, Long> {
 
+    /**
+     * Находит все сценарии для указанного хаба.
+     * Загружает связанные условия и действия в одном запросе.
+     *
+     * @param hubId идентификатор хаба
+     * @return список сценариев хаба
+     */
     @EntityGraph(attributePaths = {"sensorConditions", "sensorActions"})
     List<Scenario> findByHubId(String hubId);
 
+    /**
+     * Находит сценарий по идентификатору хаба и названию.
+     * Загружает связанные условия и действия в одном запросе.
+     *
+     * @param hubId идентификатор хаба
+     * @param name  название сценария
+     * @return сценарий, если найден
+     */
     @EntityGraph(attributePaths = {"sensorConditions", "sensorActions"})
     Optional<Scenario> findByHubIdAndName(String hubId, String name);
 
+    /**
+     * Удаляет сценарий по идентификатору хаба и названию.
+     *
+     * @param hubId идентификатор хаба
+     * @param name  название сценария для удаления
+     */
     void deleteByHubIdAndName(String hubId, String name);
 }

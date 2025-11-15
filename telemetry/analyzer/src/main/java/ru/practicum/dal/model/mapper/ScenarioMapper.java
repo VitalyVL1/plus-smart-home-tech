@@ -13,8 +13,19 @@ import java.util.stream.Collectors;
 
 import static ru.practicum.dal.model.mapper.SensorMapper.mapSensor;
 
+/**
+ * Маппер для преобразования Avro-событий в доменные объекты сценариев.
+ */
 @Slf4j
 public class ScenarioMapper {
+
+    /**
+     * Преобразует Avro-событие в доменный объект сценария.
+     *
+     * @param hubId        ID хаба
+     * @param scenarioAvro Avro-событие сценария
+     * @return доменный объект сценария или null если scenarioAvro null
+     */
     public static Scenario mapScenario(String hubId, ScenarioAddedEventAvro scenarioAvro) {
         if (scenarioAvro == null) {
             return null;
@@ -31,6 +42,9 @@ public class ScenarioMapper {
                 .build();
     }
 
+    /**
+     * Преобразует список Avro-условий в мапу сенсор->условие.
+     */
     private static Map<Sensor, Condition> mapConditions(String hubId, List<ScenarioConditionAvro> conditionAvros) {
         if (conditionAvros == null || conditionAvros.isEmpty()) {
             return Maps.newHashMap();
@@ -42,6 +56,9 @@ public class ScenarioMapper {
                         ScenarioMapper::createCondition));
     }
 
+    /**
+     * Преобразует список Avro-действий в мапу сенсор->действие.
+     */
     private static Map<Sensor, Action> mapActions(String hubId, List<DeviceActionAvro> actionAvros) {
         if (actionAvros == null || actionAvros.isEmpty()) {
             return Maps.newHashMap();
@@ -53,7 +70,9 @@ public class ScenarioMapper {
                         ScenarioMapper::createAction));
     }
 
-
+    /**
+     * Создает доменное условие из Avro-объекта.
+     */
     private static Condition createCondition(ScenarioConditionAvro conditionAvro) {
         if (conditionAvro == null) {
             return null;
@@ -66,6 +85,9 @@ public class ScenarioMapper {
                 .build();
     }
 
+    /**
+     * Создает доменное действие из Avro-объекта.
+     */
     private static Action createAction(DeviceActionAvro actionAvro) {
         if (actionAvro == null) {
             return null;
@@ -77,6 +99,10 @@ public class ScenarioMapper {
                 .build();
     }
 
+    /**
+     * Извлекает целочисленное значение из Avro-объекта.
+     * Поддерживает Integer, Boolean, Long. Для остальных типов возвращает null.
+     */
     private static Integer extractIntegerValue(Object avroValue) {
         if (avroValue == null) {
             return null;

@@ -14,6 +14,10 @@ import java.time.Instant;
 
 import static ru.practicum.dal.model.mapper.ActionMapper.toDeviceActionProto;
 
+/**
+ * Сервис для отправки действий на хабы через gRPC.
+ * Преобразует доменные действия в gRPC-сообщения и отправляет их в hub-router.
+ */
 @Service
 @Slf4j
 public class HubRouterProcessor {
@@ -21,6 +25,14 @@ public class HubRouterProcessor {
     @GrpcClient("hub-router")
     private HubRouterControllerBlockingStub hubRouterClient;
 
+    /**
+     * Обрабатывает действие сценария и отправляет его на хаб через gRPC.
+     *
+     * @param hubId        идентификатор хаба
+     * @param sensorId     идентификатор сенсора
+     * @param scenarioName название сценария
+     * @param action       действие для выполнения
+     */
     public void handleAction(String hubId, String sensorId, String scenarioName, Action action) {
         if (hubRouterClient == null) {
             log.error("GRPC client is not initialized");
@@ -57,6 +69,5 @@ public class HubRouterProcessor {
         }
 
     }
-
 
 }

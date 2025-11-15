@@ -7,6 +7,11 @@ import lombok.*;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Сущность сценария автоматизации умного дома.
+ * Хранится в таблице "scenarios" базы данных.
+ * Сценарий связывает условия (триггеры) с действиями через сенсоры.
+ */
 @Entity
 @Table(name = "scenarios")
 @Getter
@@ -16,18 +21,36 @@ import java.util.Map;
 @AllArgsConstructor
 @ToString
 public class Scenario {
+
+    /**
+     * Уникальный идентификатор сценария.
+     * Генерируется автоматически при сохранении.
+     */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /**
+     * Идентификатор хаба, к которому привязан сценарий.
+     * Обязательное поле, не может быть пустым.
+     */
     @Column(name = "hub_id", nullable = false)
     @NotBlank
     private String hubId;
 
+    /**
+     * Название сценария.
+     * Обязательное поле, не может быть пустым.
+     */
     @Column(nullable = false)
     @NotBlank
     private String name;
 
+    /**
+     * Условия сценария, сгруппированные по сенсорам.
+     * Каждый сенсор может иметь одно условие для активации сценария.
+     * Хранится в связующей таблице "scenario_conditions".
+     */
     @OneToMany(cascade = CascadeType.ALL)
     @MapKeyJoinColumn(name = "sensor_id")
     @JoinTable(
@@ -39,6 +62,11 @@ public class Scenario {
     @Builder.Default
     private Map<Sensor, Condition> sensorConditions = new HashMap<>();
 
+    /**
+     * Действия сценария, сгруппированные по сенсорам.
+     * Каждый сенсор может выполнять одно действие при активации сценария.
+     * Хранится в связующей таблице "scenario_actions".
+     */
     @OneToMany(cascade = CascadeType.ALL)
     @MapKeyJoinColumn(name = "sensor_id")
     @JoinTable(
