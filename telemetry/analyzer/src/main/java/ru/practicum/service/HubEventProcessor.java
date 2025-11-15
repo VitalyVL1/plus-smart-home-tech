@@ -80,7 +80,7 @@ public class HubEventProcessor implements Runnable {
                 case DeviceAddedEventAvro deviceAdd -> sensorService.save(hubId, deviceAdd);
 
                 case DeviceRemovedEventAvro deviceRemove ->
-                        sensorService.deleteBySensorIdAndHubId(deviceRemove.getId(), hubId);
+                        sensorService.deleteByIdAndHubId(deviceRemove.getId(), hubId);
 
                 case ScenarioAddedEventAvro scenarioAdd -> scenarioService.saveOrUpdate(hubId, scenarioAdd);
 

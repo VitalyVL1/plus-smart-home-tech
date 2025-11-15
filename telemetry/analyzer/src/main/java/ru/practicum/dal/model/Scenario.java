@@ -29,10 +29,7 @@ public class Scenario {
     private String name;
 
     @OneToMany(cascade = CascadeType.ALL)
-    @MapKeyColumn(
-            table = "scenario_conditions",
-            name = "sensor_id"
-    )
+    @MapKeyJoinColumn(name = "sensor_id")
     @JoinTable(
             name = "scenario_conditions",
             joinColumns = @JoinColumn(name = "scenario_id"),
@@ -52,28 +49,4 @@ public class Scenario {
     @ToString.Exclude
     @Builder.Default
     private Map<Sensor, Action> sensorActions = new HashMap<>();
-
-    public void addSensorCondition(Sensor sensor, Condition condition) {
-        sensorConditions.put(sensor, condition);
-    }
-
-    public void removeSensorCondition(Sensor sensor) {
-        sensorConditions.remove(sensor);
-    }
-
-    public void addSensorAction(Sensor sensor, Action action) {
-        sensorActions.put(sensor, action);
-    }
-
-    public void removeSensorAction(Sensor sensor) {
-        sensorActions.remove(sensor);
-    }
-
-    public Condition getConditionForSensor(Sensor sensor) {
-        return sensorConditions.get(sensor);
-    }
-
-    public Action getActionForSensor(Sensor sensor) {
-        return sensorActions.get(sensor);
-    }
 }

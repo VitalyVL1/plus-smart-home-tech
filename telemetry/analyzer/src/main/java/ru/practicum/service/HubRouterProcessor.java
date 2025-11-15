@@ -1,5 +1,6 @@
 package ru.practicum.service;
 
+import com.google.protobuf.Timestamp;
 import io.grpc.StatusRuntimeException;
 import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.client.inject.GrpcClient;
@@ -8,6 +9,8 @@ import ru.practicum.dal.model.Action;
 import ru.yandex.practicum.grpc.telemetry.event.DeviceActionProto;
 import ru.yandex.practicum.grpc.telemetry.event.DeviceActionRequest;
 import ru.yandex.practicum.grpc.telemetry.hubrouter.HubRouterControllerGrpc.HubRouterControllerBlockingStub;
+
+import java.time.Instant;
 
 import static ru.practicum.dal.model.mapper.ActionMapper.toDeviceActionProto;
 
@@ -18,7 +21,7 @@ public class HubRouterProcessor {
     @GrpcClient("hub-router")
     private HubRouterControllerBlockingStub hubRouterClient;
 
-    public void handleAction(String hubId, String sensorId, Action action) {
+    public void handleAction(String hubId, String sensorId, String scenarioName, Action action) {
         if (hubRouterClient == null) {
             log.error("GRPC client is not initialized");
             return;
@@ -30,9 +33,15 @@ public class HubRouterProcessor {
             return;
         }
 
+        Instant now = Instant.now();
         DeviceActionRequest deviceActionRequest = DeviceActionRequest.newBuilder()
                 .setHubId(hubId)
+                .setScenarioName(scenarioName)
                 .setAction(toDeviceActionProto(sensorId, action))
+                .setTimestamp(Timestamp.newBuilder()
+                        .setSeconds(now.getEpochSecond())
+                        .setNanos(now.getNano())
+                        .build())
                 .build();
 
         try {

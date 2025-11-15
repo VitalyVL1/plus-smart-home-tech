@@ -44,7 +44,7 @@ kafka:
     group.id: snapshot-analyzer-group
     key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
     value.deserializer: ru.practicum.SensorsSnapshotDeserializer
-    auto.offset.reset: earliest
+    auto.offset.reset: latest
     enable.auto.commit: false
     # Настройки батчинга
     fetch.min.bytes: 100

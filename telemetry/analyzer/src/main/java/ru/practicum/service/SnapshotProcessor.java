@@ -9,10 +9,7 @@ import org.apache.kafka.common.errors.WakeupException;
 import org.springframework.stereotype.Component;
 import ru.practicum.config.KafkaConfig;
 import ru.practicum.config.TopicType;
-import ru.practicum.dal.model.Action;
-import ru.practicum.dal.model.Condition;
-import ru.practicum.dal.model.ConditionType;
-import ru.practicum.dal.model.Sensor;
+import ru.practicum.dal.model.*;
 import ru.practicum.dal.service.ScenarioService;
 import ru.yandex.practicum.kafka.telemetry.event.*;
 
@@ -77,23 +74,26 @@ public class SnapshotProcessor {
     private void handleSnapshot(ConsumerRecord<String, SensorsSnapshotAvro> record) {
         SensorsSnapshotAvro sensorsSnapshotAvro = record.value();
 
-        scenarioService.findByHubId(sensorsSnapshotAvro.getHubId()).stream()
-                .filter(scenario -> scenario.getSensorConditions() != null && !scenario.getSensorConditions().isEmpty())
-                .filter(scenario -> scenario.getSensorConditions().entrySet().stream()
-                        .allMatch(entry -> {
-                            SensorStateAvro state = sensorsSnapshotAvro.getSensorsState().get(entry.getKey().getId());
-                            return state != null && isConditionSatisfied((SpecificRecordBase) state.getData(), entry.getValue());
-                        }))
-                .forEach(scenario -> {
-                    if (scenario.getSensorActions() != null) {
-                        scenario.getSensorActions().forEach(this::executeAction);
-                    }
-                });
+        //находим все сценарии к хабу
+        List<Scenario> scenarios = scenarioService.findByHubId(sensorsSnapshotAvro.getHubId());
+
+        scenarios.stream()
+                .filter(scenario -> isAllConditionSatisfied(sensorsSnapshotAvro, scenario))  // выбираем только те сценарии которые удовлетворяют всем условиям
+                .forEach(this::executeScenario);                                                     // выполняем действия данного сценария
+
     }
 
     private boolean isConditionSatisfied(SpecificRecordBase sensorData, Condition condition) {
         Integer sensorValue = extractSensorValue(sensorData, condition.getType());
         return sensorValue != null && compareWithOperation(sensorValue, condition);
+    }
+
+    private boolean isAllConditionSatisfied(SensorsSnapshotAvro sensorsSnapshotAvro, Scenario scenario) {
+        return scenario.getSensorConditions().entrySet().stream()
+                .allMatch(entry -> {
+                    SensorStateAvro state = sensorsSnapshotAvro.getSensorsState().get(entry.getKey().getId());
+                    return state != null && isConditionSatisfied((SpecificRecordBase) state.getData(), entry.getValue());
+                });
     }
 
     private Integer extractSensorValue(SpecificRecordBase sensorData, ConditionType type) {
@@ -134,8 +134,16 @@ public class SnapshotProcessor {
         };
     }
 
-    private void executeAction(Sensor sensor, Action action) {
-        hubRouterProcessor.handleAction(sensor.getHubId(), sensor.getId(), action);
+    private void executeScenario(Scenario scenario) {
+        if (scenario.getSensorActions() != null) {               // хоть поле обязательное для заполнения, на всякий случай оставляем проверку на Null
+            scenario.getSensorActions().entrySet().stream()      // для каждого сенсора запускаем все действия из сценария
+                    .forEach(entity ->
+                            hubRouterProcessor.handleAction(
+                                    scenario.getHubId(),
+                                    entity.getKey().getId(),
+                                    scenario.getName(),
+                                    entity.getValue())
+                    );
+        }
     }
-
 }

@@ -19,6 +19,7 @@ import java.util.Optional;
 public class ScenarioService {
     private final ScenarioRepository scenarioRepository;
 
+    @Transactional
     public Scenario saveOrUpdate(String hubId, ScenarioAddedEventAvro scenarioAvro) {
         Scenario newScenario = ScenarioMapper.mapScenario(hubId, scenarioAvro);
         Optional<Scenario> existingScenario = scenarioRepository.findByHubIdAndName(hubId, newScenario.getName());

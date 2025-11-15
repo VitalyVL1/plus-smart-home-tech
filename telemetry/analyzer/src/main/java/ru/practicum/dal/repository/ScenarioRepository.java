@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ScenarioRepository extends JpaRepository<Scenario, Long> {
+
+    @EntityGraph(attributePaths = {"sensorConditions", "sensorActions"})
     List<Scenario> findByHubId(String hubId);
 
     @EntityGraph(attributePaths = {"sensorConditions", "sensorActions"})

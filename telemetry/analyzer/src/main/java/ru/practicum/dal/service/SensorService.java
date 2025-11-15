@@ -24,8 +24,8 @@ public class SensorService {
     }
 
     @Transactional
-    public void deleteBySensorIdAndHubId(String sensorId, String hubId) {
-        sensorRepository.deleteBySensorIdAndHubId(sensorId, hubId);
+    public void deleteByIdAndHubId(String sensorId, String hubId) {
+        sensorRepository.deleteByIdAndHubId(sensorId, hubId);
     }
 
     public boolean existsByIdInAndHubId(Collection<String> ids, String hubId) {
