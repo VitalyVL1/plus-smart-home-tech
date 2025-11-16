@@ -1,6 +1,5 @@
 package ru.practicum.dal.repository;
 
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import ru.practicum.dal.model.Scenario;
 
@@ -15,23 +14,19 @@ public interface ScenarioRepository extends JpaRepository<Scenario, Long> {
 
     /**
      * Находит все сценарии для указанного хаба.
-     * Загружает связанные условия и действия в одном запросе.
      *
      * @param hubId идентификатор хаба
      * @return список сценариев хаба
      */
-    @EntityGraph(attributePaths = {"sensorConditions", "sensorActions"})
     List<Scenario> findByHubId(String hubId);
 
     /**
      * Находит сценарий по идентификатору хаба и названию.
-     * Загружает связанные условия и действия в одном запросе.
      *
      * @param hubId идентификатор хаба
      * @param name  название сценария
      * @return сценарий, если найден
      */
-    @EntityGraph(attributePaths = {"sensorConditions", "sensorActions"})
     Optional<Scenario> findByHubIdAndName(String hubId, String name);
 
     /**

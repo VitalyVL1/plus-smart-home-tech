@@ -6,14 +6,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.dal.model.Scenario;
 import ru.practicum.dal.model.mapper.ScenarioMapper;
-import ru.practicum.dal.repository.ActionRepository;
-import ru.practicum.dal.repository.ConditionRepository;
 import ru.practicum.dal.repository.ScenarioRepository;
 import ru.practicum.dal.repository.SensorRepository;
 import ru.yandex.practicum.kafka.telemetry.event.DeviceActionAvro;
 import ru.yandex.practicum.kafka.telemetry.event.ScenarioAddedEventAvro;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,8 +25,6 @@ import java.util.Optional;
 public class ScenarioService {
     private final ScenarioRepository scenarioRepository;
     private final SensorRepository sensorRepository;
-    private final ActionRepository actionRepository;
-    private final ConditionRepository conditionRepository;
 
     /**
      * Сохраняет или обновляет сценарий для указанного хаба.
@@ -97,7 +92,10 @@ public class ScenarioService {
      * @param newData  новые данные сценария
      */
     private void updateScenarioData(Scenario existing, Scenario newData) {
-        existing.setSensorConditions(new HashMap<>(newData.getSensorConditions()));
-        existing.setSensorActions(new HashMap<>(newData.getSensorActions()));
+        existing.getSensorActions().clear();
+        existing.getSensorConditions().clear();
+
+        existing.getSensorActions().putAll(newData.getSensorActions());
+        existing.getSensorConditions().putAll(newData.getSensorConditions());
     }
 }

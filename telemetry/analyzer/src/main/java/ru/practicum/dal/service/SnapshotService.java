@@ -4,10 +4,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.specific.SpecificRecordBase;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.dal.model.Condition;
 import ru.practicum.dal.model.ConditionType;
 import ru.practicum.dal.model.Scenario;
 import ru.practicum.dal.model.mapper.ScenarioMapper;
+import ru.practicum.dal.repository.ScenarioRepository;
 import ru.yandex.practicum.grpc.telemetry.event.DeviceActionRequest;
 import ru.yandex.practicum.kafka.telemetry.event.*;
 
@@ -20,7 +22,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class SnapshotService {
-    private final ScenarioService scenarioService;
+    private final ScenarioRepository scenarioRepository;
 
     /**
      * Обрабатывает снимок состояния сенсоров и возвращает список действий для выполнения.
@@ -29,10 +31,11 @@ public class SnapshotService {
      * @param sensorsSnapshotAvro снимок состояния сенсоров
      * @return список запросов на выполнение действий
      */
+    @Transactional(readOnly = true)
     public List<DeviceActionRequest> handleSnapshot(SensorsSnapshotAvro sensorsSnapshotAvro) {
 
         //находим все сценарии к хабу
-        List<Scenario> scenarios = scenarioService.findByHubId(sensorsSnapshotAvro.getHubId());
+        List<Scenario> scenarios = scenarioRepository.findByHubId(sensorsSnapshotAvro.getHubId());
 
         //переводим все сценарии в действия которые нужно исполнить в Proto схему DeviceActionProto
         return scenarios.stream()
