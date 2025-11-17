@@ -3,6 +3,7 @@ package ru.practicum.dal.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
+import org.hibernate.annotations.BatchSize;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -47,34 +48,40 @@ public class Scenario {
     private String name;
 
     /**
-     * Условия сценария, сгруппированные по сенсорам.
+     * Условия сценария, сгруппированные по Id сенсоров.
      * Каждый сенсор может иметь одно условие для активации сценария.
      * Хранится в связующей таблице "scenario_conditions".
      */
-    @OneToMany(cascade = CascadeType.ALL)
-    @MapKeyJoinColumn(name = "sensor_id")
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @MapKeyColumn(
+            table = "scenario_conditions",
+            name = "sensor_id")
     @JoinTable(
             name = "scenario_conditions",
             joinColumns = @JoinColumn(name = "scenario_id"),
             inverseJoinColumns = @JoinColumn(name = "condition_id")
     )
+    @BatchSize(size = 30)
     @ToString.Exclude
     @Builder.Default
-    private Map<Sensor, Condition> sensorConditions = new HashMap<>();
+    private Map<String, Condition> sensorConditions = new HashMap<>();
 
     /**
-     * Действия сценария, сгруппированные по сенсорам.
+     * Действия сценария, сгруппированные по Id сенсоров.
      * Каждый сенсор может выполнять одно действие при активации сценария.
      * Хранится в связующей таблице "scenario_actions".
      */
-    @OneToMany(cascade = CascadeType.ALL)
-    @MapKeyJoinColumn(name = "sensor_id")
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @MapKeyColumn(
+            table = "scenario_actions",
+            name = "sensor_id")
     @JoinTable(
             name = "scenario_actions",
             joinColumns = @JoinColumn(name = "scenario_id"),
             inverseJoinColumns = @JoinColumn(name = "action_id")
     )
+    @BatchSize(size = 15)
     @ToString.Exclude
     @Builder.Default
-    private Map<Sensor, Action> sensorActions = new HashMap<>();
+    private Map<String, Action> sensorActions = new HashMap<>();
 }

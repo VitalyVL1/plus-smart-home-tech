@@ -1,7 +1,6 @@
 package ru.practicum.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -9,18 +8,17 @@ import org.apache.kafka.common.errors.WakeupException;
 import org.springframework.stereotype.Component;
 import ru.practicum.config.KafkaConfig;
 import ru.practicum.config.TopicType;
-import ru.practicum.dal.model.Condition;
-import ru.practicum.dal.model.ConditionType;
-import ru.practicum.dal.model.Scenario;
-import ru.practicum.dal.service.ScenarioService;
-import ru.yandex.practicum.kafka.telemetry.event.*;
+import ru.practicum.dal.service.SnapshotService;
+import ru.yandex.practicum.grpc.telemetry.event.DeviceActionRequest;
+import ru.yandex.practicum.kafka.telemetry.event.SensorsSnapshotAvro;
 
 import java.time.Duration;
 import java.util.List;
 
 /**
- * Обработчик снимков состояния сенсоров.
- * Анализирует текущее состояние сенсоров и запускает сценарии при выполнении условий.
+ * Компонент для обработки снимков состояния сенсоров из Kafka.
+ * Читает сообщения из топика Kafka, анализирует состояние сенсоров
+ * и запускает соответствующие сценарии при выполнении условий.
  */
 @Component
 @Slf4j
@@ -28,21 +26,30 @@ public class SnapshotProcessor {
     private final KafkaConsumer<String, SensorsSnapshotAvro> snapshotConsumer;
     private final KafkaConfig config;
 
-    private final ScenarioService scenarioService;
+    private final SnapshotService snapshotService;
     private final HubRouterProcessor hubRouterProcessor;
 
     private static final Duration POLL_DURATION = Duration.ofSeconds(3);
 
-    public SnapshotProcessor(KafkaConfig config, ScenarioService scenarioService, HubRouterProcessor hubRouterProcessor) {
+    /**
+     * Конструктор компонента обработки снимков.
+     *
+     * @param config             конфигурация Kafka
+     * @param snapshotService    сервис для обработки снимков и проверки сценариев
+     * @param hubRouterProcessor процессор для отправки действий через gRPC
+     */
+    public SnapshotProcessor(KafkaConfig config, SnapshotService snapshotService, HubRouterProcessor hubRouterProcessor) {
         this.config = config;
         this.snapshotConsumer = new KafkaConsumer<>(config.getSnapshotConsumerProperties());
-        this.scenarioService = scenarioService;
+        this.snapshotService = snapshotService;
         this.hubRouterProcessor = hubRouterProcessor;
     }
 
     /**
      * Запускает обработку снимков состояния сенсоров.
-     * Читает данные из Kafka и проверяет выполнение условий сценариев.
+     * Читает данные из Kafka топика, проверяет выполнение условий сценариев
+     * и отправляет действия для выполнения через HubRouterProcessor.
+     * Метод работает в бесконечном цикле до получения сигнала завершения.
      */
     public void start() {
         log.info("Starting SnapshotProcessor");
@@ -59,7 +66,8 @@ public class SnapshotProcessor {
                     log.debug("Processing {} snapshots", records.count());
                 }
 
-                records.forEach(this::handleSnapshot);
+                records.forEach(this::executeActions);
+
                 snapshotConsumer.commitSync();
             }
 
@@ -82,118 +90,31 @@ public class SnapshotProcessor {
     }
 
     /**
-     * Обрабатывает один снимок состояния сенсоров.
-     * Проверяет все сценарии хаба и выполняет те, условия которых выполнены.
+     * Обрабатывает отдельный снимок состояния сенсоров.
+     * Вызывает сервис для проверки условий сценариев и отправляет полученные действия на выполнение.
      *
-     * @param record запись из Kafka со снимком состояния
+     * @param record запись из Kafka топика с данными снимка состояния сенсоров
      */
-    private void handleSnapshot(ConsumerRecord<String, SensorsSnapshotAvro> record) {
-        SensorsSnapshotAvro sensorsSnapshotAvro = record.value();
+    private void executeActions(ConsumerRecord<String, SensorsSnapshotAvro> record) {
+        if (record.value() == null) {
+            log.debug("Received null snapshot from topic: {}, partition: {}, offset: {}",
+                    record.topic(), record.partition(), record.offset());
+            return;
+        }
 
-        //находим все сценарии к хабу
-        List<Scenario> scenarios = scenarioService.findByHubId(sensorsSnapshotAvro.getHubId());
+        try {
+            List<DeviceActionRequest> requests = snapshotService.handleSnapshot(record.value());
 
-        scenarios.stream()
-                .filter(scenario -> isAllConditionSatisfied(sensorsSnapshotAvro, scenario))  // выбираем только те сценарии которые удовлетворяют всем условиям
-                .forEach(this::executeScenario);                                                     // выполняем действия данного сценария
-
-    }
-
-    /**
-     * Проверяет выполнение условия для одного сенсора.
-     *
-     * @param sensorData данные сенсора
-     * @param condition  условие для проверки
-     * @return true если условие выполнено
-     */
-    private boolean isConditionSatisfied(SpecificRecordBase sensorData, Condition condition) {
-        Integer sensorValue = extractSensorValue(sensorData, condition.getType());
-        return sensorValue != null && compareWithOperation(sensorValue, condition);
-    }
-
-    /**
-     * Проверяет выполнение всех условий сценария.
-     *
-     * @param sensorsSnapshotAvro снимок состояния всех сенсоров
-     * @param scenario            сценарий для проверки
-     * @return true если все условия сценария выполнены
-     */
-    private boolean isAllConditionSatisfied(SensorsSnapshotAvro sensorsSnapshotAvro, Scenario scenario) {
-        return scenario.getSensorConditions().entrySet().stream()
-                .allMatch(entry -> {
-                    SensorStateAvro state = sensorsSnapshotAvro.getSensorsState().get(entry.getKey().getId());
-                    return state != null && isConditionSatisfied((SpecificRecordBase) state.getData(), entry.getValue());
-                });
-    }
-
-    /**
-     * Извлекает значение сенсора в зависимости от его типа.
-     *
-     * @param sensorData данные сенсора
-     * @param type       тип условия
-     * @return числовое значение сенсора или null если тип не поддерживается
-     */
-    private Integer extractSensorValue(SpecificRecordBase sensorData, ConditionType type) {
-        return switch (type) {
-            case TEMPERATURE -> {
-                if (sensorData instanceof ClimateSensorAvro climate) yield climate.getTemperatureC();
-                if (sensorData instanceof TemperatureSensorAvro temp) yield temp.getTemperatureC();
-                yield null;
+            if (!requests.isEmpty()) {
+                log.info("Processing {} action requests from snapshot", requests.size());
+                requests.forEach(hubRouterProcessor::handleAction);
+                log.debug("Successfully processed {} action requests", requests.size());
+            } else {
+                log.debug("No action requests generated from snapshot");
             }
-            case HUMIDITY -> {
-                if (sensorData instanceof ClimateSensorAvro climate) yield climate.getHumidity();
-                yield null;
-            }
-            case CO2LEVEL -> {
-                if (sensorData instanceof ClimateSensorAvro climate) yield climate.getCo2Level();
-                yield null;
-            }
-            case LUMINOSITY -> {
-                if (sensorData instanceof LightSensorAvro light) yield light.getLuminosity();
-                yield null;
-            }
-            case MOTION -> {
-                if (sensorData instanceof MotionSensorAvro motion) yield motion.getMotion() ? 1 : 0;
-                yield null;
-            }
-            case SWITCH -> {
-                if (sensorData instanceof SwitchSensorAvro switchSensor) yield switchSensor.getState() ? 1 : 0;
-                yield null;
-            }
-        };
-    }
-
-    /**
-     * Сравнивает значение сенсора с условием по указанной операции.
-     *
-     * @param sensorValue значение сенсора
-     * @param condition   условие сравнения
-     * @return true если сравнение успешно
-     */
-    private boolean compareWithOperation(Integer sensorValue, Condition condition) {
-        return switch (condition.getOperation()) {
-            case EQUALS -> sensorValue.equals(condition.getValue());
-            case GREATER_THAN -> sensorValue > condition.getValue();
-            case LOWER_THAN -> sensorValue < condition.getValue();
-        };
-    }
-
-    /**
-     * Выполняет действия сценария.
-     * Отправляет все действия сценария через HubRouterProcessor.
-     *
-     * @param scenario сценарий для выполнения
-     */
-    private void executeScenario(Scenario scenario) {
-        if (scenario.getSensorActions() != null) {               // хоть поле обязательное для заполнения, на всякий случай оставляем проверку на Null
-            scenario.getSensorActions().entrySet().stream()      // для каждого сенсора запускаем все действия из сценария
-                    .forEach(entity ->
-                            hubRouterProcessor.handleAction(
-                                    scenario.getHubId(),
-                                    entity.getKey().getId(),
-                                    scenario.getName(),
-                                    entity.getValue())
-                    );
+        } catch (Exception e) {
+            log.error("Error processing snapshot from topic: {}, partition: {}, offset: {}",
+                    record.topic(), record.partition(), record.offset(), e);
         }
     }
 }

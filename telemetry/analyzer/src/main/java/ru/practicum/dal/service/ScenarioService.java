@@ -8,6 +8,7 @@ import ru.practicum.dal.model.Scenario;
 import ru.practicum.dal.model.mapper.ScenarioMapper;
 import ru.practicum.dal.repository.ScenarioRepository;
 import ru.practicum.dal.repository.SensorRepository;
+import ru.yandex.practicum.kafka.telemetry.event.DeviceActionAvro;
 import ru.yandex.practicum.kafka.telemetry.event.ScenarioAddedEventAvro;
 
 import java.util.List;
@@ -41,7 +42,7 @@ public class ScenarioService {
 
         List<String> deviceIds = scenarioAvro.getActions()
                 .stream()
-                .map(d -> d.getSensorId())
+                .map(DeviceActionAvro::getSensorId)
                 .toList();
 
         if (!sensorRepository.existsByIdInAndHubId(deviceIds, hubId)) {
@@ -74,16 +75,6 @@ public class ScenarioService {
     }
 
     /**
-     * Находит все сценарии для указанного хаба.
-     *
-     * @param hubId идентификатор хаба
-     * @return список сценариев хаба
-     */
-    public List<Scenario> findByHubId(String hubId) {
-        return scenarioRepository.findByHubId(hubId);
-    }
-
-    /**
      * Обновляет данные существующего сценария новыми значениями.
      * Очищает старые условия и действия, затем добавляет новые.
      *
@@ -91,12 +82,10 @@ public class ScenarioService {
      * @param newData  новые данные сценария
      */
     private void updateScenarioData(Scenario existing, Scenario newData) {
-        // Очищаем старые коллекции
-        existing.getSensorConditions().clear();
         existing.getSensorActions().clear();
+        existing.getSensorConditions().clear();
 
-        // Добавляем новые данные через putAll()
-        existing.getSensorConditions().putAll(newData.getSensorConditions());
         existing.getSensorActions().putAll(newData.getSensorActions());
+        existing.getSensorConditions().putAll(newData.getSensorConditions());
     }
 }
