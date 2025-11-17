@@ -75,16 +75,6 @@ public class ScenarioService {
     }
 
     /**
-     * Находит все сценарии для указанного хаба.
-     *
-     * @param hubId идентификатор хаба
-     * @return список сценариев хаба
-     */
-    public List<Scenario> findByHubId(String hubId) {
-        return scenarioRepository.findByHubId(hubId);
-    }
-
-    /**
      * Обновляет данные существующего сценария новыми значениями.
      * Очищает старые условия и действия, затем добавляет новые.
      *

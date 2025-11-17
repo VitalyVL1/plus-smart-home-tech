@@ -3,6 +3,7 @@ package ru.practicum.dal.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
+import org.hibernate.annotations.BatchSize;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -60,6 +61,7 @@ public class Scenario {
             joinColumns = @JoinColumn(name = "scenario_id"),
             inverseJoinColumns = @JoinColumn(name = "condition_id")
     )
+    @BatchSize(size = 30)
     @ToString.Exclude
     @Builder.Default
     private Map<String, Condition> sensorConditions = new HashMap<>();
@@ -78,6 +80,7 @@ public class Scenario {
             joinColumns = @JoinColumn(name = "scenario_id"),
             inverseJoinColumns = @JoinColumn(name = "action_id")
     )
+    @BatchSize(size = 15)
     @ToString.Exclude
     @Builder.Default
     private Map<String, Action> sensorActions = new HashMap<>();
