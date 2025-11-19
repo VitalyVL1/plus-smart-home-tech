@@ -1,21 +1,22 @@
 package ru.practicum.service.handler.sensor;
 
 import org.springframework.stereotype.Component;
-import ru.practicum.model.sensor.LightSensorEvent;
-import ru.practicum.model.sensor.SensorEvent;
-import ru.practicum.model.sensor.SensorEventType;
 import ru.practicum.service.KafkaEventProducer;
+import ru.yandex.practicum.grpc.telemetry.event.LightSensorProto;
+import ru.yandex.practicum.grpc.telemetry.event.SensorEventProto;
 import ru.yandex.practicum.kafka.telemetry.event.LightSensorAvro;
+
+import static ru.yandex.practicum.grpc.telemetry.event.SensorEventProto.PayloadCase.LIGHT_SENSOR;
 
 /**
  * Обработчик событий датчиков освещенности.
- * Преобразует LightSensorEvent в LightSensorAvro и отправляет в Kafka топик TELEMETRY_SENSORS.
+ * Преобразует LightSensorProto в LightSensorAvro и отправляет в Kafka топик TELEMETRY_SENSORS.
  * Обрабатывает данные об уровне освещенности и качестве связи датчика.
  *
  * @see BaseSensorEventHandler
- * @see LightSensorEvent
+ * @see LightSensorProto
  * @see LightSensorAvro
- * @see SensorEventType#LIGHT_SENSOR_EVENT
+ * @see SensorEventProto.PayloadCase#LIGHT_SENSOR
  */
 @Component
 public class LightSensorEventHandler extends BaseSensorEventHandler<LightSensorAvro> {
@@ -30,30 +31,33 @@ public class LightSensorEventHandler extends BaseSensorEventHandler<LightSensorA
     }
 
     /**
-     * Преобразует SensorEvent в LightSensorAvro.
+     * Преобразует LightSensorProto в LightSensorAvro.
      * Выполняет маппинг данных датчика освещенности: уровня освещенности и качества связи.
      *
-     * @param event событие датчика освещенности, должно быть типа LightSensorEvent
+     * @param event событие датчика освещенности, должно быть типа LightSensorProto
      * @return Avro-представление данных датчика освещенности
-     * @throws ClassCastException       если event не является LightSensorEvent
      * @throws IllegalArgumentException если данные датчика некорректны
      */
     @Override
-    protected LightSensorAvro mapToAvro(SensorEvent event) {
-        LightSensorEvent _event = (LightSensorEvent) event;
-        return LightSensorAvro.newBuilder()
-                .setLinkQuality(_event.getLinkQuality())
-                .setLuminosity(_event.getLuminosity())
-                .build();
+    protected LightSensorAvro mapToAvro(SensorEventProto event) {
+        if (event.getPayloadCase() == LIGHT_SENSOR) {
+            LightSensorProto lightSensor = event.getLightSensor();
+            return LightSensorAvro.newBuilder()
+                    .setLinkQuality(lightSensor.getLinkQuality())
+                    .setLuminosity(lightSensor.getLuminosity())
+                    .build();
+        } else {
+            throw new IllegalArgumentException("Expected LIGHT_SENSOR event type");
+        }
     }
 
     /**
      * Возвращает тип обрабатываемого события датчика освещенности.
      *
-     * @return тип события LIGHT_SENSOR_EVENT
+     * @return тип события LIGHT_SENSOR
      */
     @Override
-    public SensorEventType getMessageType() {
-        return SensorEventType.LIGHT_SENSOR_EVENT;
+    public SensorEventProto.PayloadCase getMessageType() {
+        return LIGHT_SENSOR;
     }
 }
