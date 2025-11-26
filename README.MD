@@ -12,6 +12,7 @@
 - **Telemetry Analyzer** - анализирует телеметрию, проверяет сценарии и отправляет команды
 - **Telemetry Serialization** - модуль для сериализации/десериализации сообщений Kafka и gRPC взаимодействия
 - **Config Server** - централизованный сервер конфигураций для всех сервисов
+- **Discovery Server** - сервер обнаружения сервисов
 
 ## Модули проекта
 
@@ -19,6 +20,11 @@
 
 Сервер централизованной конфигурации на основе Spring Cloud Config. Позволяет микросервисам подключаться к внешним
 конфигурациям, что упрощает управление настройками в разных средах.
+
+### infra/discovery-server
+
+Сервер обнаружения микросервисов на основе Spring Cloud Eureka. Позволяет микросервисам обнаруживать друг друга и
+взаимодействовать.
 
 ### telemetry/collector
 
@@ -42,6 +48,7 @@
 - Java 21
 - Spring Boot 3
 - Spring Cloud Config
+- Spring Cloud Netflix Eureka Server
 - Kafka (межсервисное взаимодействие)
 - PostgreSQL (хранение данных)
 - gRPC (взаимодействие между сервисами)
@@ -57,6 +64,7 @@
 plus-smart-home-tech/
 ├── infra/
 │   └── config-server/   # Сервер конфигураций
+│   └── discovery-server/   # Сервер обнаружения сервисов
 ├── telemetry/
 │   ├── aggregator/       # Агрегатор телеметрии
 │   ├── analyzer/        # Анализатор телеметрии
@@ -93,6 +101,7 @@ docker-compose up -d
 
 ```bash
 cd infra/config-server && mvn spring-boot:run
+cd infra/discovery-server && mvn spring-boot:run
 cd telemetry/collector && mvn spring-boot:run
 cd telemetry/aggregator && mvn spring-boot:run
 cd telemetry/analyzer && mvn spring-boot:run
