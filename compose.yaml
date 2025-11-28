@@ -41,6 +41,7 @@ services:
       - "5432:5432"
     volumes:
       - smart-home-db-data:/var/lib/postgresql/data/
+      - ./init-schemas.sql:/docker-entrypoint-initdb.d/init-schemas.sql  # Добавляем инициализацию схем
     environment:
       - POSTGRES_DB=smarthomedb
       - POSTGRES_USER=postgres

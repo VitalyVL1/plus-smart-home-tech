@@ -1,6 +1,8 @@
 spring:
   application:
     name: collector # Имя текущего микросервиса, используется для идентификации в Eureka и Config Server
+  profiles:
+    active: telemetry # Активный профиль, используется для загрузки конфигурации из Config Server
   config:
     import: "configserver:" # Указывает, что конфигурация должна быть загружена с Config Server
   cloud:

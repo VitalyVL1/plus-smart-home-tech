@@ -8,7 +8,7 @@ spring:
       server:
         native:
           searchLocations:
-            - classpath:config/telemetry/{application} # Путь к файлам конфигураций сервисов внутри classpath
+            - classpath:config/{profile}/{application} # Путь к файлам конфигураций сервисов внутри classpath
 
 server:
   port: 0 # Порт сервера. Значение 0 означает, что порт будет назначен автоматически

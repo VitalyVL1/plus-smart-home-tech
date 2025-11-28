@@ -17,7 +17,7 @@ spring:
   database-platform: org.hibernate.dialect.PostgreSQLDialect
   sql.init.mode: always
   datasource:
-    url: jdbc:postgresql://localhost:5432/smarthomedb
+    url: jdbc:postgresql://localhost:5432/smarthomedb?currentSchema=telemetry
     driver-class-name: org.postgresql.Driver
     username: postgres
     password: 12345
