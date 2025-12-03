@@ -8,7 +8,7 @@ import ru.practicum.model.Product;
 import java.util.List;
 import java.util.UUID;
 
-@Mapper(componentModel = "spring") // Для интеграции со Spring
+@Mapper(componentModel = MappingConstants.ComponentModel.SPRING) // Для интеграции со Spring
 public interface ProductMapper {
 
     // Entity → DTO
@@ -32,6 +32,8 @@ public interface ProductMapper {
     // Обновление Entity из DTO (для PATCH/PUT)
     @Mapping(source = "productId", target = "productId",
             qualifiedByName = "stringToUuid")
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void updateEntity(ProductDto productDto, @MappingTarget Product product);
 

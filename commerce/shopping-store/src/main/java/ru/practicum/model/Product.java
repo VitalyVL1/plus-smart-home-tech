@@ -3,7 +3,9 @@ package ru.practicum.model;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.UuidGenerator;
 import ru.practicum.dto.product.ProductCategory;
 import ru.practicum.dto.product.ProductState;
 import ru.practicum.dto.product.QuantityState;
@@ -20,9 +22,10 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@DynamicUpdate
 public class Product {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @UuidGenerator
     @Column(name = "product_id", updatable = false, nullable = false)
     private UUID productId;
 
@@ -52,9 +55,9 @@ public class Product {
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
-    Instant createdAt;
+    private Instant createdAt;
 
     @UpdateTimestamp
     @Column(name = "updated_at")
-    Instant updatedAt;
+    private Instant updatedAt;
 }

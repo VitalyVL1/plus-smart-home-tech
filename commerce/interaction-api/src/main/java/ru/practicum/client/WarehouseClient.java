@@ -1,5 +1,5 @@
 package ru.practicum.client;
 
 //TODO
-public class WarehouseClient {
+public interface WarehouseClient {
 }

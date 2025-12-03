@@ -1,5 +1,5 @@
 package ru.practicum.client;
 
 //TODO
-public class ShoppingStoreClient {
+public interface ShoppingStoreClient {
 }

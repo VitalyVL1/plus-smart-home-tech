@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS shopping_carts
     updated_at       TIMESTAMP             DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS cart_items
+CREATE TABLE IF NOT EXISTS shopping_cart_items
 (
     shopping_cart_id UUID    NOT NULL REFERENCES shopping_carts (shopping_cart_id) ON DELETE CASCADE,
     product_id       UUID    NOT NULL,

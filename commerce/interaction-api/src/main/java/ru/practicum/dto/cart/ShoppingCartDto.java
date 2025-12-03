@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import org.hibernate.validator.constraints.UUID;
 
-import java.util.List;
+import java.util.Map;
 
 /**
  * DTO корзины покупок.
@@ -18,6 +18,6 @@ public record ShoppingCartDto(
         @UUID
         String shoppingCartId,
         @NotNull
-        List<Long> products
+        Map<java.util.UUID, Long> products
 ) {
 }

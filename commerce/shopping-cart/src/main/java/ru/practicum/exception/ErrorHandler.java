@@ -15,16 +15,31 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 @Slf4j
 public class ErrorHandler {
-    @ExceptionHandler(ProductNotFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ErrorResponse handleNotFoundException(ProductNotFoundException e) {
-        log.warn("Exception product not found: {}", e.getMessage());
+    @ExceptionHandler(NotAuthorizedUserException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ErrorResponse NotAuthorizedUserException(NotAuthorizedUserException e) {
+        log.warn("Unauthorized user: {}", e.getMessage());
         return ErrorResponse.builder()
                 .cause(e.getCause())
                 .stackTrace(List.of(e.getStackTrace()))
-                .httpStatus(HttpStatus.NOT_FOUND.name())
+                .httpStatus(HttpStatus.UNAUTHORIZED.name())
                 .userMessage(e.getMessage())
-                .message("Product not found")
+                .message("Unauthorized user")
+                .suppressed(List.of(e.getSuppressed()))
+                .localizedMessage(e.getLocalizedMessage())
+                .build();
+    }
+
+    @ExceptionHandler(NoProductsInShoppingCartException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleNoProductsInShoppingCartException(NoProductsInShoppingCartException e) {
+        log.warn("No products in shopping cart: {}", e.getMessage());
+        return ErrorResponse.builder()
+                .cause(e.getCause())
+                .stackTrace(List.of(e.getStackTrace()))
+                .httpStatus(HttpStatus.BAD_REQUEST.name())
+                .userMessage(e.getMessage())
+                .message("No products in shopping cart")
                 .suppressed(List.of(e.getSuppressed()))
                 .localizedMessage(e.getLocalizedMessage())
                 .build();
@@ -84,7 +99,6 @@ public class ErrorHandler {
         return errorResponse;
     }
 
-    // Обработка исключений валидации Pageable
     @ExceptionHandler(IllegalArgumentException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleIllegalArgumentException(
