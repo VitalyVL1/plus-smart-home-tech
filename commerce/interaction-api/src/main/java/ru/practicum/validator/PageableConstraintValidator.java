@@ -5,7 +5,6 @@ import jakarta.validation.ConstraintValidatorContext;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
-@Component
 public class PageableConstraintValidator implements ConstraintValidator<ValidPageable, Pageable> {
 
     private int minPage;

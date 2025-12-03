@@ -38,7 +38,7 @@ public class WarehouseController {
     public BookedProductsDto checkQuantityInWarehouse(@RequestBody @Valid ShoppingCartDto shoppingCart) {
         log.info("Checking quantity in warehouse");
         try {
-            return warehouseService.bookProducts(shoppingCart);
+            return warehouseService.checkQuantityInWarehouse(shoppingCart);
         } catch (Exception e) {
             log.error("Error checking quantity in warehouse", e);
             throw e;

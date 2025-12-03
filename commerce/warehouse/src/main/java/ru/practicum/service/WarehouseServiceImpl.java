@@ -5,6 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.dto.cart.ShoppingCartDto;
+import ru.practicum.dto.product.QuantityState;
+import ru.practicum.dto.product.SetProductQuantityStateRequest;
 import ru.practicum.dto.warehouse.AddProductToWarehouseRequest;
 import ru.practicum.dto.warehouse.AddressDto;
 import ru.practicum.dto.warehouse.BookedProductsDto;
@@ -12,6 +14,7 @@ import ru.practicum.dto.warehouse.NewProductInWarehouseRequest;
 import ru.practicum.exception.NoSpecifiedProductInWarehouseException;
 import ru.practicum.exception.ProductInShoppingCartLowQuantityInWarehouse;
 import ru.practicum.exception.SpecifiedProductAlreadyInWarehouseException;
+import ru.practicum.feign.client.ShoppingStoreClient;
 import ru.practicum.mapper.AddressMapper;
 import ru.practicum.mapper.DimensionMapper;
 import ru.practicum.model.BookedProduct;
@@ -36,14 +39,13 @@ public class WarehouseServiceImpl implements WarehouseService {
     private final BookedProductRepository bookedProductRepository;
     private final AddressMapper addressMapper;
     private final DimensionMapper dimensionMapper;
+    private final ShoppingStoreClient shoppingStoreClient;
 
     @Transactional
     @Override
     public void addNewItem(NewProductInWarehouseRequest request) {
         Warehouse warehouse = getRandomWarehouse();
-
         UUID productId = UUID.fromString(request.productId());
-
         List<WarehouseProduct> products = warehouse.getProducts();
 
         if (products.stream()
@@ -64,16 +66,14 @@ public class WarehouseServiceImpl implements WarehouseService {
         products.add(newProduct);
     }
 
-    @Transactional
     @Override
-    public BookedProductsDto bookProducts(ShoppingCartDto shoppingCart) {
+    public BookedProductsDto checkQuantityInWarehouse(ShoppingCartDto shoppingCart) {
         Map<UUID, Long> shoppingCartProducts = shoppingCart.products();
 
         List<WarehouseProduct> products = warehouseProductRepository
                 .findAllByProductIdIn(shoppingCartProducts.keySet());
 
-        // проверка достаточности товара корректна, в т.ч. для нескольких складов
-        Map<UUID, Long> warehouseProducts = products.stream()
+        Map<UUID, Long> availableProducts = products.stream()
                 .collect(Collectors.toMap(
                         WarehouseProduct::getProductId,
                         WarehouseProduct::getQuantity,
@@ -81,7 +81,7 @@ public class WarehouseServiceImpl implements WarehouseService {
 
         List<UUID> notEnoughProducts = shoppingCartProducts.entrySet().stream()
                 .filter(entry -> {
-                    Long available = warehouseProducts.get(entry.getKey());
+                    Long available = availableProducts.get(entry.getKey());
                     return available == null || available < entry.getValue();
                 }).map(Map.Entry::getKey)
                 .toList();
@@ -90,6 +90,48 @@ public class WarehouseServiceImpl implements WarehouseService {
             throw new ProductInShoppingCartLowQuantityInWarehouse("Not enough products in warehouse, ids = " +
                                                                   notEnoughProducts);
         }
+
+        // рассчитываем вес и объем доставки
+        Double deliveryWeight = products.stream()
+                .mapToDouble(wp -> wp.getWeight() * shoppingCartProducts.get(wp.getProductId()))
+                .sum();
+        Double deliveryVolume = products.stream()
+                .mapToDouble(wp -> wp.getDimensions().getVolume() * shoppingCartProducts.get(wp.getProductId()))
+                .sum();
+        Boolean fragile = products.stream().anyMatch(WarehouseProduct::getFragile);
+
+        return BookedProductsDto.builder()
+                .deliveryWeight(deliveryWeight)
+                .deliveryVolume(deliveryVolume)
+                .fragile(fragile)
+                .build();
+    }
+
+    @Transactional
+    @Override
+    public void addItem(AddProductToWarehouseRequest request) {
+        UUID productId = UUID.fromString(request.productId());
+
+        //в рамках ТЗ работаем с одним складом, то будет только 1 элемент или пусто
+        // TODO: в случае работы с несколькими складами, нужно будет:
+        // 1. менять логику самого запроса (указывать конкретный склад)
+        // 2. менять логику процесса добавления на конкретный склад
+        WarehouseProduct warehouseProduct = warehouseProductRepository.findByProductId(productId)
+                .orElseThrow(() -> new NoSpecifiedProductInWarehouseException(
+                        String.format("Product which id = %s not found", productId)));
+
+        warehouseProduct.setQuantity(warehouseProduct.getQuantity() + request.quantity());
+
+        updateQuantityState(warehouseProduct);
+    }
+
+    @Transactional
+    @Override
+    public void bookProducts(ShoppingCartDto shoppingCart) {
+        Map<UUID, Long> shoppingCartProducts = shoppingCart.products();
+
+        List<WarehouseProduct> products = warehouseProductRepository
+                .findAllByProductIdIn(shoppingCartProducts.keySet());
 
         // TODO: При добавлении поддержки нескольких складов необходимо:
         // 1. Изменить логику резервирования - распределять товары между складами
@@ -121,40 +163,7 @@ public class WarehouseServiceImpl implements WarehouseService {
         products.forEach(product ->
                 product.setQuantity(product.getQuantity() - shoppingCartProducts.get(product.getProductId())));
 
-        // TODO: добавить расчет и обновление статуса по доступности товара в ShoppingStore
-
-        // рассчитываем вес и объем доставки
-        Double deliveryWeight = products.stream()
-                .mapToDouble(wp -> wp.getWeight() * wp.getQuantity())
-                .sum();
-        Double deliveryVolume = products.stream()
-                .mapToDouble(wp -> wp.getDimensions().getVolume() * wp.getQuantity())
-                .sum();
-        Boolean fragile = products.stream().anyMatch(WarehouseProduct::getFragile);
-
-        return BookedProductsDto.builder()
-                .deliveryWeight(deliveryWeight)
-                .deliveryVolume(deliveryVolume)
-                .fragile(fragile)
-                .build();
-    }
-
-    @Transactional
-    @Override
-    public void addItem(AddProductToWarehouseRequest request) {
-        UUID productId = UUID.fromString(request.productId());
-
-        //в рамках ТЗ работаем с одним складом, то будет только 1 элемент или пусто
-        // TODO: в случае работы с несколькими складами, нужно будет:
-        // 1. менять логику самого запроса (указывать конкретный склад)
-        // 2. менять логику процесса добавления на конкретный склад
-        WarehouseProduct warehouseProduct = warehouseProductRepository.findByProductId(productId)
-                .orElseThrow(() -> new NoSpecifiedProductInWarehouseException(
-                        String.format("Product which id = %s not found", productId)));
-
-        warehouseProduct.setQuantity(warehouseProduct.getQuantity() + request.quantity());
-
-        // TODO: добавить расчет и обновление статуса по доступности товара в ShoppingStore
+        products.forEach(this::updateQuantityState); //обновляем статус в магазине
     }
 
     @Override
@@ -173,5 +182,27 @@ public class WarehouseServiceImpl implements WarehouseService {
         return warehouseRepository.findAll().stream()
                 .findAny()
                 .orElseThrow(() -> new RuntimeException("No warehouses found"));
+    }
+
+    private void updateQuantityState(WarehouseProduct warehouseProduct) {
+        SetProductQuantityStateRequest request = new SetProductQuantityStateRequest(
+                warehouseProduct.getProductId().toString(),
+                determineQuantityState(warehouseProduct.getQuantity()));
+
+        if (!shoppingStoreClient.setQuantityState(request)) {
+            throw new RuntimeException("Unable to set quantity state");
+        }
+    }
+
+    private QuantityState determineQuantityState(Long quantity) {
+        if (quantity == 0) {
+            return QuantityState.ENDED;
+        } else if (quantity < 10) {
+            return QuantityState.FEW;
+        } else if (quantity < 100) {
+            return QuantityState.ENOUGH;
+        } else {
+            return QuantityState.MANY;
+        }
     }
 }

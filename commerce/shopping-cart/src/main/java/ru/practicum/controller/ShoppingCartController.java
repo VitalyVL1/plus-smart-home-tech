@@ -37,7 +37,9 @@ public class ShoppingCartController {
 
     @PutMapping
     @ResponseStatus(HttpStatus.OK)
-    public ShoppingCartDto addItemToShoppingCart(@RequestParam String username, @RequestBody @ValidCartItems Map<UUID, Long> items) {
+    public ShoppingCartDto addItemToShoppingCart(
+            @RequestParam String username,
+            @RequestBody @ValidCartItems Map<UUID, Long> items) {
         log.info("Updating shopping cart");
         try {
             return shoppingCartService.addItemToShoppingCart(username, items, true);
@@ -73,7 +75,9 @@ public class ShoppingCartController {
 
     @PostMapping("/change-quantity")
     @ResponseStatus(HttpStatus.OK)
-    public ShoppingCartDto changeItemQuantity(@RequestParam String username, @RequestBody @Valid ChangeProductQuantityRequest request) {
+    public ShoppingCartDto changeItemQuantity(
+            @RequestParam String username,
+            @RequestBody @Valid ChangeProductQuantityRequest request) {
         log.info("Changing item quantity in shopping cart for user {}, request {}", username, request);
         try {
             return shoppingCartService.changeItemQuantity(username, request);

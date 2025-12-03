@@ -43,7 +43,7 @@ public class ShoppingCart {
     @CollectionTable(name = "shopping_cart_items", joinColumns = @JoinColumn(name = "shopping_cart_id"))
     @MapKeyColumn(name = "product_id")
     @Column(name = "quantity", nullable = false)
-    @BatchSize(size = 15)
+    @BatchSize(size = 10)
     @ToString.Exclude
     @Builder.Default
     @OnDelete(action = OnDeleteAction.CASCADE)

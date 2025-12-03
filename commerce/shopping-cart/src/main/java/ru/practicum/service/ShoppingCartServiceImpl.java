@@ -6,8 +6,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.dto.cart.ChangeProductQuantityRequest;
 import ru.practicum.dto.cart.ShoppingCartDto;
+import ru.practicum.dto.warehouse.BookedProductsDto;
 import ru.practicum.exception.NoProductsInShoppingCartException;
 import ru.practicum.exception.NotAuthorizedUserException;
+import ru.practicum.feign.client.WarehouseClient;
 import ru.practicum.mapper.ShoppingCartMapper;
 import ru.practicum.model.ShoppingCart;
 import ru.practicum.repository.ShoppingCartRepository;
@@ -18,11 +20,11 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 @Slf4j
 public class ShoppingCartServiceImpl implements ShoppingCartService {
     private final ShoppingCartRepository shoppingCartRepository;
     private final ShoppingCartMapper shoppingCartMapper;
+    private final WarehouseClient warehouseClient;
 
     @Override
     public ShoppingCartDto getShoppingCartByUsername(String username) {
@@ -53,6 +55,11 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
             // Замена количества (явная установка)
             shoppingCart.getProducts().putAll(products);
         }
+
+        ShoppingCartDto shoppingCartDto = shoppingCartMapper.toDto(shoppingCart);
+
+        BookedProductsDto bookedProductsDto = warehouseClient.checkQuantityInWarehouse(shoppingCartDto); // проверяем доступность товара на складе
+
         return shoppingCartMapper.toDto(shoppingCartRepository.save(shoppingCart));
     }
 
@@ -90,7 +97,7 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
             throw new NoProductsInShoppingCartException("No products in shopping cart for items = " + notFoundItems);
         }
 
-        products.keySet().removeAll(items);
+        items.forEach(products.keySet()::remove);
 
         return shoppingCartMapper.toDto(shoppingCart);
     }
@@ -112,7 +119,11 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
 
         products.put(productId, request.newQuantity());
 
-        return shoppingCartMapper.toDto(shoppingCart);
+        ShoppingCartDto shoppingCartDto = shoppingCartMapper.toDto(shoppingCart);
+
+        warehouseClient.checkQuantityInWarehouse(shoppingCartDto); //проверяем доступность товара на складе
+
+        return shoppingCartDto;
     }
 
 

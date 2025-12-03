@@ -10,10 +10,12 @@ public interface WarehouseService {
 
     void addNewItem(NewProductInWarehouseRequest request);
 
-    BookedProductsDto bookProducts(ShoppingCartDto shoppingCart);
+    BookedProductsDto checkQuantityInWarehouse(ShoppingCartDto shoppingCart);
 
     void addItem(AddProductToWarehouseRequest request);
 
     AddressDto getAddress();
+
+    void bookProducts(ShoppingCartDto shoppingCart); // по ТЗ не нужно, в качестве тренировки
 
 }
