@@ -6,7 +6,6 @@ import ru.practicum.dto.product.ProductDto;
 import ru.practicum.model.Product;
 
 import java.util.List;
-import java.util.UUID;
 
 @Mapper(componentModel = MappingConstants.ComponentModel.SPRING) // Для интеграции со Spring
 public interface ProductMapper {

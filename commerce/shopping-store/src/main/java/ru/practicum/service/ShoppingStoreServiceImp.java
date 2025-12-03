@@ -15,7 +15,6 @@ import ru.practicum.mapper.ProductMapper;
 import ru.practicum.model.Product;
 import ru.practicum.repository.ShoppingStoreRepository;
 
-import java.nio.file.ProviderNotFoundException;
 import java.util.UUID;
 
 @Service

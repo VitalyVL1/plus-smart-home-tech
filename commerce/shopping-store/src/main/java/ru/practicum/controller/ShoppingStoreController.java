@@ -27,7 +27,8 @@ import java.util.UUID;
 public class ShoppingStoreController implements ShoppingStoreClient {
 
     private final ShoppingStoreService shoppingStoreService;
-@Override
+
+    @Override
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
     public Page<ProductDto> getProducts(

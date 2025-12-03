@@ -59,6 +59,7 @@ public class WarehouseController implements WarehouseClient {
             throw e;
         }
     }
+
     @Override
     @GetMapping("/address")
     @ResponseStatus(HttpStatus.OK)
