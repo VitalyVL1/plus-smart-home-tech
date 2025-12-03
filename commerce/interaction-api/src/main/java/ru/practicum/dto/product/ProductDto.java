@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 /**
  * DTO (Data Transfer Object) для представления информации о товаре.
@@ -27,7 +28,7 @@ import java.math.BigDecimal;
  */
 
 public record ProductDto(
-        String productId,
+        UUID productId,
         @NotBlank
         String productName,
         @NotBlank

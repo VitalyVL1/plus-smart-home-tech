@@ -1,7 +1,7 @@
-package ru.practicum.feign.client;
+package ru.practicum.client;
 
 import jakarta.validation.Valid;
-import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.cloud.openfeign.SpringQueryMap;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -14,7 +14,6 @@ import ru.practicum.validator.ValidPageable;
 
 import java.util.UUID;
 
-@FeignClient(name = "shopping-store", path = "/api/v1/shopping-store")
 public interface ShoppingStoreClient {
 
     @GetMapping
@@ -34,8 +33,8 @@ public interface ShoppingStoreClient {
     Boolean removeProduct(@RequestBody UUID productId);
 
     @PostMapping("/quantityState")
-    Boolean setQuantityState(@Valid @ModelAttribute SetProductQuantityStateRequest request);
+    Boolean setQuantityState(@Valid @SpringQueryMap SetProductQuantityStateRequest request);
 
     @GetMapping("/{productId}")
-    ProductDto getProduct(@PathVariable String productId);
+    ProductDto getProduct(@PathVariable UUID productId);
 }

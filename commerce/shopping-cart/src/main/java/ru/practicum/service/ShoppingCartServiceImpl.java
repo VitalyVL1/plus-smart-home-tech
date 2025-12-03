@@ -4,12 +4,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.client.WareHouseFeignClient;
 import ru.practicum.dto.cart.ChangeProductQuantityRequest;
 import ru.practicum.dto.cart.ShoppingCartDto;
 import ru.practicum.dto.warehouse.BookedProductsDto;
 import ru.practicum.exception.NoProductsInShoppingCartException;
 import ru.practicum.exception.NotAuthorizedUserException;
-import ru.practicum.feign.client.WarehouseClient;
 import ru.practicum.mapper.ShoppingCartMapper;
 import ru.practicum.model.ShoppingCart;
 import ru.practicum.repository.ShoppingCartRepository;
@@ -24,7 +24,7 @@ import java.util.UUID;
 public class ShoppingCartServiceImpl implements ShoppingCartService {
     private final ShoppingCartRepository shoppingCartRepository;
     private final ShoppingCartMapper shoppingCartMapper;
-    private final WarehouseClient warehouseClient;
+    private final WareHouseFeignClient warehouseClient;
 
     @Override
     public ShoppingCartDto getShoppingCartByUsername(String username) {
@@ -106,18 +106,17 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
     @Override
     public ShoppingCartDto changeItemQuantity(String username, ChangeProductQuantityRequest request) {
         validateUsername(username);
-        UUID productId = UUID.fromString(request.productId());
 
         ShoppingCart shoppingCart = shoppingCartRepository.findByUsernameIgnoreCaseAndActiveTrue(username)
                 .orElseThrow(() -> new NoProductsInShoppingCartException("No shopping cart for username = " + username));
 
         Map<UUID, Long> products = shoppingCart.getProducts();
 
-        if (!products.containsKey(productId)) {
-            throw new NoProductsInShoppingCartException("No products in shopping cart for productId = " + productId);
+        if (!products.containsKey(request.productId())) {
+            throw new NoProductsInShoppingCartException("No products in shopping cart for productId = " + request.productId());
         }
 
-        products.put(productId, request.newQuantity());
+        products.put(request.productId(), request.newQuantity());
 
         ShoppingCartDto shoppingCartDto = shoppingCartMapper.toDto(shoppingCart);
 

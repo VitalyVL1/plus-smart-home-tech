@@ -10,6 +10,7 @@ import ru.practicum.dto.product.ProductCategory;
 import ru.practicum.dto.product.ProductDto;
 import ru.practicum.dto.product.ProductState;
 import ru.practicum.dto.product.SetProductQuantityStateRequest;
+import ru.practicum.exception.ProductNotFoundException;
 import ru.practicum.mapper.ProductMapper;
 import ru.practicum.model.Product;
 import ru.practicum.repository.ShoppingStoreRepository;
@@ -19,7 +20,6 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 @Slf4j
 public class ShoppingStoreServiceImp implements ShoppingStoreService {
     private final ShoppingStoreRepository shoppingStoreRepository;
@@ -43,7 +43,7 @@ public class ShoppingStoreServiceImp implements ShoppingStoreService {
     @Transactional
     @Override
     public Boolean removeProduct(UUID productId) {
-        Product productToRemove = getProduct(productId.toString());
+        Product productToRemove = getProduct(productId);
         try {
             productToRemove.setProductState(ProductState.DEACTIVATE);
             return true;
@@ -72,13 +72,13 @@ public class ShoppingStoreServiceImp implements ShoppingStoreService {
     }
 
     @Override
-    public ProductDto getProductById(String productId) {
+    public ProductDto getProductById(UUID productId) {
         return productMapper.toDto(getProduct(productId));
     }
 
-    private Product getProduct(String productId) {
-        return shoppingStoreRepository.findById(UUID.fromString(productId))
+    private Product getProduct(UUID productId) {
+        return shoppingStoreRepository.findById(productId)
                 .orElseThrow(() ->
-                        new ProviderNotFoundException(String.format("Product with id %s not found", productId)));
+                        new ProductNotFoundException(String.format("Product with id %s not found", productId)));
     }
 }

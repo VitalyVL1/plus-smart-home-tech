@@ -19,5 +19,5 @@ public interface ShoppingStoreService {
 
     Page<ProductDto> getProductsByCategory(ProductCategory category, Pageable pageable);
 
-    ProductDto getProductById(String productId);
+    ProductDto getProductById(UUID productId);
 }

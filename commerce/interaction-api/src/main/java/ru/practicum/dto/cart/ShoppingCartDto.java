@@ -2,9 +2,9 @@ package ru.practicum.dto.cart;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import org.hibernate.validator.constraints.UUID;
 
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * DTO корзины покупок.
@@ -14,10 +14,9 @@ import java.util.Map;
  * @param products       список идентификаторов товаров в корзине, не должен быть null
  */
 public record ShoppingCartDto(
-        @NotBlank
-        @UUID
-        String shoppingCartId,
         @NotNull
-        Map<java.util.UUID, Long> products
+        UUID shoppingCartId,
+        @NotNull
+        Map<UUID, Long> products
 ) {
 }

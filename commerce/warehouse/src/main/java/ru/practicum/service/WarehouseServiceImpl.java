@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.client.ShoppingStoreFeignClient;
 import ru.practicum.dto.cart.ShoppingCartDto;
 import ru.practicum.dto.product.QuantityState;
 import ru.practicum.dto.product.SetProductQuantityStateRequest;
@@ -14,7 +15,6 @@ import ru.practicum.dto.warehouse.NewProductInWarehouseRequest;
 import ru.practicum.exception.NoSpecifiedProductInWarehouseException;
 import ru.practicum.exception.ProductInShoppingCartLowQuantityInWarehouse;
 import ru.practicum.exception.SpecifiedProductAlreadyInWarehouseException;
-import ru.practicum.feign.client.ShoppingStoreClient;
 import ru.practicum.mapper.AddressMapper;
 import ru.practicum.mapper.DimensionMapper;
 import ru.practicum.model.BookedProduct;
@@ -31,7 +31,6 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 @Slf4j
 public class WarehouseServiceImpl implements WarehouseService {
     private final WarehouseRepository warehouseRepository;
@@ -39,7 +38,7 @@ public class WarehouseServiceImpl implements WarehouseService {
     private final BookedProductRepository bookedProductRepository;
     private final AddressMapper addressMapper;
     private final DimensionMapper dimensionMapper;
-    private final ShoppingStoreClient shoppingStoreClient;
+    private final ShoppingStoreFeignClient shoppingStoreClient;
 
     @Transactional
     @Override
@@ -122,7 +121,7 @@ public class WarehouseServiceImpl implements WarehouseService {
 
         warehouseProduct.setQuantity(warehouseProduct.getQuantity() + request.quantity());
 
-        updateQuantityState(warehouseProduct);
+        //updateQuantityState(warehouseProduct);
     }
 
     @Transactional
@@ -150,7 +149,7 @@ public class WarehouseServiceImpl implements WarehouseService {
         List<BookedProduct> bookedProducts =
                 products.stream()
                         .map(product -> BookedProduct.builder()
-                                .shoppingCartId(UUID.fromString(shoppingCart.shoppingCartId()))
+                                .shoppingCartId(shoppingCart.shoppingCartId())
                                 .warehouseProduct(product)
                                 .quantity(shoppingCartProducts.get(product.getProductId()))
                                 .build())
@@ -185,8 +184,13 @@ public class WarehouseServiceImpl implements WarehouseService {
     }
 
     private void updateQuantityState(WarehouseProduct warehouseProduct) {
+
+        QuantityState quantityState = determineQuantityState(warehouseProduct.getQuantity());
+
+        log.warn("Setting quantity state for product {} to {}", warehouseProduct.getProductId(), quantityState);
+
         SetProductQuantityStateRequest request = new SetProductQuantityStateRequest(
-                warehouseProduct.getProductId().toString(),
+                warehouseProduct.getProductId(),
                 determineQuantityState(warehouseProduct.getQuantity()));
 
         if (!shoppingStoreClient.setQuantityState(request)) {

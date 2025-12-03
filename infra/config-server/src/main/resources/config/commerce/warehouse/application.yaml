@@ -13,3 +13,40 @@ spring:
     driver-class-name: org.postgresql.Driver
     username: postgres
     password: 12345
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,circuitbreakers
+
+resilience4j.circuitbreaker:
+  configs:
+    # Базовая конфигурация по умолчанию
+    default:
+      slidingWindowType: COUNT_BASED        # Анализ по количеству вызовов
+      slidingWindowSize: 100                # Анализировать последние 100 вызовов
+      minimumNumberOfCalls: 10              # Минимальное кол-во вызовов для принятия решения
+      permittedNumberOfCallsInHalfOpenState: 3  # Тестовые вызовы в HALF_OPEN состоянии
+      automaticTransitionFromOpenToHalfOpenEnabled: true  # Автопереход OPEN → HALF_OPEN
+      writableStackTraceEnabled: false      # Без полных stack traces (экономия памяти)
+
+  instances:
+    # Магазин/каталог - сервис чтения, можно кешировать данные
+    shopping-store:
+      baseConfig: default                   # Наследуем базовые настройки
+      slidingWindowType: TIME_BASED         # Временное окно для переменной нагрузки
+      slidingWindowSize: 60                 # Анализировать вызовы за последние 60 секунд
+      failureRateThreshold: 40              # CB срабатывает при 40% ошибок
+      slowCallRateThreshold: 40             # CB срабатывает при 40% медленных вызовов
+      slowCallDurationThreshold: 2000       # Вызов считается медленным если > 2 сек
+      waitDurationInOpenState: 10000        # 10 секунд в OPEN состоянии
+
+    # Корзина товаров - нужен быстрый доступ к данным
+    shopping-cart:
+      baseConfig: default                   # Наследуем настройки из default
+      minimumNumberOfCalls: 20              # Больше вызовов для анализа (стабильность)
+      failureRateThreshold: 20              # CB срабатывает при 20% ошибок
+      slowCallRateThreshold: 25             # CB срабатывает при 25% медленных вызовов
+      slowCallDurationThreshold: 1000       # Вызов считается медленным если > 1 сек
+      waitDurationInOpenState: 5000         # 5 секунд в OPEN состоянии

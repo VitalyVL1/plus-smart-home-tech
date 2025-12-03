@@ -4,14 +4,20 @@ import lombok.Builder;
 
 import java.util.List;
 
-public record ErrorResponse(Throwable cause,
-                            List<StackTraceElement> stackTrace,
-                            String httpStatus,
-                            String userMessage,
-                            String message,
-                            List<Throwable> suppressed,
-                            String localizedMessage) {
+public record ErrorResponse(
+        String message,           // общее сообщение
+        List<Issue> issues        // конкретные проблемы
+) {
     @Builder
     public ErrorResponse {
+    }
+
+    public record Issue(
+            String location,      // место ошибки
+            String description    // описание ошибки
+    ) {
+        @Builder
+        public Issue {
+        }
     }
 }

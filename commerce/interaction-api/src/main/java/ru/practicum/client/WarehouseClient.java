@@ -1,7 +1,6 @@
-package ru.practicum.feign.client;
+package ru.practicum.client;
 
 import jakarta.validation.Valid;
-import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -12,7 +11,6 @@ import ru.practicum.dto.warehouse.AddressDto;
 import ru.practicum.dto.warehouse.BookedProductsDto;
 import ru.practicum.dto.warehouse.NewProductInWarehouseRequest;
 
-@FeignClient(name = "warehouse", path = "/api/v1/warehouse")
 public interface WarehouseClient {
     @PutMapping
     void addNewItemToWarehouse(@RequestBody @Valid NewProductInWarehouseRequest request);

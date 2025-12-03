@@ -11,51 +11,40 @@ import java.util.List;
 
 @RestControllerAdvice
 @Slf4j
-public class ErrorHandler {
+public class ErrorHandler extends BaseExceptionHandler {
 
     @ExceptionHandler(NoSpecifiedProductInWarehouseException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleNoSpecifiedProductInWarehouseException(NoSpecifiedProductInWarehouseException e) {
-        log.warn("No specified product in warehouse: {}", e.getMessage());
-        return ErrorResponse.builder()
-                .cause(e.getCause())
-                .stackTrace(List.of(e.getStackTrace()))
-                .httpStatus(HttpStatus.BAD_REQUEST.name())
-                .userMessage(e.getMessage())
-                .message("No specified product  in warehouse")
-                .suppressed(List.of(e.getSuppressed()))
-                .localizedMessage(e.getLocalizedMessage())
-                .build();
+        return createWarehouseErrorResponse("Product not found in warehouse", e);
     }
 
     @ExceptionHandler(SpecifiedProductAlreadyInWarehouseException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleSpecifiedProductAlreadyInWarehouseException(SpecifiedProductAlreadyInWarehouseException e) {
-        log.warn("Product already specified in warehouse: {}", e.getMessage());
-        return ErrorResponse.builder()
-                .cause(e.getCause())
-                .stackTrace(List.of(e.getStackTrace()))
-                .httpStatus(HttpStatus.BAD_REQUEST.name())
-                .userMessage(e.getMessage())
-                .message("Product already specified in warehouse")
-                .suppressed(List.of(e.getSuppressed()))
-                .localizedMessage(e.getLocalizedMessage())
-                .build();
+        return createWarehouseErrorResponse("Product already exists in warehouse", e);
     }
-
 
     @ExceptionHandler(ProductInShoppingCartLowQuantityInWarehouse.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleProductInShoppingCartLowQuantityInWarehouse(ProductInShoppingCartLowQuantityInWarehouse e) {
-        log.warn("Not enough products in warehouse: {}", e.getMessage());
-        return ErrorResponse.builder()
-                .cause(e.getCause())
-                .stackTrace(List.of(e.getStackTrace()))
-                .httpStatus(HttpStatus.BAD_REQUEST.name())
-                .userMessage(e.getMessage())
-                .message("Not enough products in warehouse")
-                .suppressed(List.of(e.getSuppressed()))
-                .localizedMessage(e.getLocalizedMessage())
+        return createWarehouseErrorResponse("Insufficient stock in warehouse", e);
+    }
+
+    private ErrorResponse createWarehouseErrorResponse(String message, Exception e) {
+        List<ErrorResponse.Issue> issues = List.of(
+                ErrorResponse.Issue.builder()
+                        .location(e.getClass().getSimpleName())
+                        .description(e.getMessage())
+                        .build()
+        );
+
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .message(message)
+                .issues(issues)
                 .build();
+
+        log.warn("{}: {}", message, e.getMessage(), e);
+        return errorResponse;
     }
 }

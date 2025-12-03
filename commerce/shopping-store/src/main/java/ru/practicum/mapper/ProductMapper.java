@@ -12,8 +12,6 @@ import java.util.UUID;
 public interface ProductMapper {
 
     // Entity → DTO
-    @Mapping(source = "productId", target = "productId",
-            qualifiedByName = "uuidToString")
     ProductDto toDto(Product product);
 
     List<ProductDto> toDto(List<Product> products);
@@ -23,28 +21,13 @@ public interface ProductMapper {
     }
 
     // DTO → Entity (для создания)
-    @Mapping(source = "productId", target = "productId",
-            qualifiedByName = "stringToUuid")
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     Product toEntity(ProductDto productDto);
 
     // Обновление Entity из DTO (для PATCH/PUT)
-    @Mapping(source = "productId", target = "productId",
-            qualifiedByName = "stringToUuid")
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void updateEntity(ProductDto productDto, @MappingTarget Product product);
-
-    // Кастомные методы конвертации
-    @Named("uuidToString")
-    default String uuidToString(UUID uuid) {
-        return uuid != null ? uuid.toString() : null;
-    }
-
-    @Named("stringToUuid")
-    default UUID stringToUuid(String str) {
-        return str != null ? UUID.fromString(str) : null;
-    }
 }

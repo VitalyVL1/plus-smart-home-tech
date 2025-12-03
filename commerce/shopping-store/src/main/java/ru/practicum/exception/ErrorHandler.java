@@ -15,15 +15,19 @@ public class ErrorHandler extends BaseExceptionHandler {
     @ExceptionHandler(ProductNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponse handleNotFoundException(ProductNotFoundException e) {
-        log.warn("Exception product not found: {}", e.getMessage());
-        return ErrorResponse.builder()
-                .cause(e.getCause())
-                .stackTrace(List.of(e.getStackTrace()))
-                .httpStatus(HttpStatus.NOT_FOUND.name())
-                .userMessage(e.getMessage())
+        List<ErrorResponse.Issue> issues = List.of(
+                ErrorResponse.Issue.builder()
+                        .location(e.getClass().getSimpleName())
+                        .description(e.getMessage())
+                        .build()
+        );
+
+        ErrorResponse errorResponse = ErrorResponse.builder()
                 .message("Product not found")
-                .suppressed(List.of(e.getSuppressed()))
-                .localizedMessage(e.getLocalizedMessage())
+                .issues(issues)
                 .build();
+
+        log.warn("Product not found: {}", e.getMessage(), e);
+        return errorResponse;
     }
 }

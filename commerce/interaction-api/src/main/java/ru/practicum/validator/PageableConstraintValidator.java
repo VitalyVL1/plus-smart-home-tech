@@ -3,7 +3,6 @@ package ru.practicum.validator;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Component;
 
 public class PageableConstraintValidator implements ConstraintValidator<ValidPageable, Pageable> {
 

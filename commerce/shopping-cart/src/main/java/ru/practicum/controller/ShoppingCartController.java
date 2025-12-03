@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import ru.practicum.client.ShoppingCartClient;
 import ru.practicum.dto.cart.ChangeProductQuantityRequest;
 import ru.practicum.dto.cart.ShoppingCartDto;
 import ru.practicum.service.ShoppingCartService;
@@ -20,9 +21,10 @@ import java.util.UUID;
 @Validated
 @RequiredArgsConstructor
 @Slf4j
-public class ShoppingCartController {
+public class ShoppingCartController implements ShoppingCartClient {
     private final ShoppingCartService shoppingCartService;
 
+    @Override
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
     public ShoppingCartDto getShoppingCart(@RequestParam String username) {
@@ -35,6 +37,7 @@ public class ShoppingCartController {
         }
     }
 
+    @Override
     @PutMapping
     @ResponseStatus(HttpStatus.OK)
     public ShoppingCartDto addItemToShoppingCart(
@@ -49,6 +52,7 @@ public class ShoppingCartController {
         }
     }
 
+    @Override
     @DeleteMapping
     @ResponseStatus(HttpStatus.OK)
     public void deactivateShoppingCart(@RequestParam String username) {
@@ -61,6 +65,7 @@ public class ShoppingCartController {
         }
     }
 
+    @Override
     @PostMapping("/remove")
     @ResponseStatus(HttpStatus.OK)
     public ShoppingCartDto removeItemFromShoppingCart(@RequestParam String username, @RequestBody List<UUID> items) {
@@ -73,6 +78,7 @@ public class ShoppingCartController {
         }
     }
 
+    @Override
     @PostMapping("/change-quantity")
     @ResponseStatus(HttpStatus.OK)
     public ShoppingCartDto changeItemQuantity(

@@ -1,7 +1,8 @@
 package ru.practicum.dto.product;
 
 import jakarta.validation.constraints.NotNull;
-import org.hibernate.validator.constraints.UUID;
+
+import java.util.UUID;
 
 
 /**
@@ -11,9 +12,8 @@ import org.hibernate.validator.constraints.UUID;
  * @param quantityState состояние количества товара
  */
 public record SetProductQuantityStateRequest(
-        @UUID
         @NotNull
-        String productId,
+        UUID productId,
         @NotNull
         QuantityState quantityState
 ) {

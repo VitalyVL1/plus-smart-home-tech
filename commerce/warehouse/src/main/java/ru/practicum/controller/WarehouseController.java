@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import ru.practicum.client.WarehouseClient;
 import ru.practicum.dto.cart.ShoppingCartDto;
 import ru.practicum.dto.warehouse.AddProductToWarehouseRequest;
 import ru.practicum.dto.warehouse.AddressDto;
@@ -18,9 +19,10 @@ import ru.practicum.service.WarehouseService;
 @Validated
 @RequiredArgsConstructor
 @Slf4j
-public class WarehouseController {
+public class WarehouseController implements WarehouseClient {
     private final WarehouseService warehouseService;
 
+    @Override
     @PutMapping
     @ResponseStatus(HttpStatus.OK)
     public void addNewItemToWarehouse(@RequestBody @Valid NewProductInWarehouseRequest request) {
@@ -33,6 +35,7 @@ public class WarehouseController {
         }
     }
 
+    @Override
     @PostMapping("/check")
     @ResponseStatus(HttpStatus.OK)
     public BookedProductsDto checkQuantityInWarehouse(@RequestBody @Valid ShoppingCartDto shoppingCart) {
@@ -56,7 +59,7 @@ public class WarehouseController {
             throw e;
         }
     }
-
+    @Override
     @GetMapping("/address")
     @ResponseStatus(HttpStatus.OK)
     public AddressDto getWarehouseAddress() {

@@ -10,6 +10,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import ru.practicum.client.ShoppingStoreClient;
 import ru.practicum.dto.product.ProductCategory;
 import ru.practicum.dto.product.ProductDto;
 import ru.practicum.dto.product.SetProductQuantityStateRequest;
@@ -23,10 +24,10 @@ import java.util.UUID;
 @Validated
 @RequiredArgsConstructor
 @Slf4j
-public class ShoppingStoreController {
+public class ShoppingStoreController implements ShoppingStoreClient {
 
     private final ShoppingStoreService shoppingStoreService;
-
+@Override
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
     public Page<ProductDto> getProducts(
@@ -43,6 +44,7 @@ public class ShoppingStoreController {
         }
     }
 
+    @Override
     @PutMapping
     @ResponseStatus(HttpStatus.OK)
     public ProductDto createProduct(@RequestBody @Valid ProductDto dto) {
@@ -55,6 +57,7 @@ public class ShoppingStoreController {
         }
     }
 
+    @Override
     @PostMapping
     @ResponseStatus(HttpStatus.OK)
     public ProductDto updateProduct(@RequestBody @Valid ProductDto dto) {
@@ -67,6 +70,7 @@ public class ShoppingStoreController {
         }
     }
 
+    @Override
     @PostMapping("/removeProductFromStore")
     @ResponseStatus(HttpStatus.OK)
     public Boolean removeProduct(@RequestBody UUID productId) {
@@ -79,6 +83,7 @@ public class ShoppingStoreController {
         }
     }
 
+    @Override
     @PostMapping("/quantityState")
     @ResponseStatus(HttpStatus.OK)
     public Boolean setQuantityState(@Valid @ModelAttribute SetProductQuantityStateRequest request) {
@@ -91,9 +96,10 @@ public class ShoppingStoreController {
         }
     }
 
+    @Override
     @GetMapping("/{productId}")
     @ResponseStatus(HttpStatus.OK)
-    public ProductDto getProduct(@PathVariable String productId) {
+    public ProductDto getProduct(@PathVariable UUID productId) {
         log.info("Getting product with id {}", productId);
         try {
             return shoppingStoreService.getProductById(productId);
