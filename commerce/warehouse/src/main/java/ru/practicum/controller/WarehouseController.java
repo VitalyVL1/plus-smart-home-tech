@@ -2,10 +2,10 @@ package ru.practicum.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import ru.practicum.annotation.LogAllMethods;
 import ru.practicum.client.WarehouseClient;
 import ru.practicum.dto.cart.ShoppingCartDto;
 import ru.practicum.dto.warehouse.AddProductToWarehouseRequest;
@@ -14,11 +14,11 @@ import ru.practicum.dto.warehouse.BookedProductsDto;
 import ru.practicum.dto.warehouse.NewProductInWarehouseRequest;
 import ru.practicum.service.WarehouseService;
 
+@LogAllMethods
 @RestController
 @RequestMapping("/api/v1/warehouse")
 @Validated
 @RequiredArgsConstructor
-@Slf4j
 public class WarehouseController implements WarehouseClient {
     private final WarehouseService warehouseService;
 
@@ -26,50 +26,26 @@ public class WarehouseController implements WarehouseClient {
     @PutMapping
     @ResponseStatus(HttpStatus.OK)
     public void addNewItemToWarehouse(@RequestBody @Valid NewProductInWarehouseRequest request) {
-        log.info("Adding new item to warehouse");
-        try {
-            warehouseService.addNewItem(request);
-        } catch (Exception e) {
-            log.error("Error adding new item to warehouse", e);
-            throw e;
-        }
+        warehouseService.addNewItem(request);
     }
 
     @Override
     @PostMapping("/check")
     @ResponseStatus(HttpStatus.OK)
     public BookedProductsDto checkQuantityInWarehouse(@RequestBody @Valid ShoppingCartDto shoppingCart) {
-        log.info("Checking quantity in warehouse");
-        try {
-            return warehouseService.checkQuantityInWarehouse(shoppingCart);
-        } catch (Exception e) {
-            log.error("Error checking quantity in warehouse", e);
-            throw e;
-        }
+        return warehouseService.checkQuantityInWarehouse(shoppingCart);
     }
 
     @PostMapping("/add")
     @ResponseStatus(HttpStatus.OK)
     public void addItemToWarehouse(@RequestBody @Valid AddProductToWarehouseRequest request) {
-        log.info("Adding item to warehouse");
-        try {
-            warehouseService.addItem(request);
-        } catch (Exception e) {
-            log.error("Error adding item to warehouse", e);
-            throw e;
-        }
+        warehouseService.addItem(request);
     }
 
     @Override
     @GetMapping("/address")
     @ResponseStatus(HttpStatus.OK)
     public AddressDto getWarehouseAddress() {
-        log.info("Getting warehouse address");
-        try {
-            return warehouseService.getAddress();
-        } catch (Exception e) {
-            log.error("Error getting warehouse address", e);
-            throw e;
-        }
+        return warehouseService.getAddress();
     }
 }
