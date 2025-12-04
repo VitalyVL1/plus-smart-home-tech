@@ -29,9 +29,7 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
     @Override
     public ShoppingCartDto getShoppingCartByUsername(String username) {
         validateUsername(username);
-
-        ShoppingCart shoppingCart = shoppingCartRepository.findByUsernameIgnoreCaseAndActiveTrue(username)
-                .orElseThrow(() -> new NotAuthorizedUserException("No cart for username = " + username));
+        ShoppingCart shoppingCart = getOrCreateShoppingCart(username); // получаем имеющуюся или создаем новую корзину для пользователя
         return shoppingCartMapper.toDto(shoppingCart);
     }
 
@@ -39,12 +37,7 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
     @Override
     public ShoppingCartDto addItemToShoppingCart(String username, Map<UUID, Long> products, boolean mergeQuantities) {
         validateUsername(username);
-
-        ShoppingCart shoppingCart = shoppingCartRepository.findByUsernameIgnoreCaseAndActiveTrue(username)
-                .orElseGet(() -> ShoppingCart.builder()
-                        .username(username)
-                        .active(true)
-                        .build());
+        ShoppingCart shoppingCart = getOrCreateShoppingCart(username); // получаем имеющуюся или создаем новую корзину для пользователя
 
         if (mergeQuantities) {
             // Суммирование количества (обычное поведение)
@@ -57,10 +50,11 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
         }
 
         ShoppingCartDto shoppingCartDto = shoppingCartMapper.toDto(shoppingCart);
-
         BookedProductsDto bookedProductsDto = warehouseClient.checkQuantityInWarehouse(shoppingCartDto); // проверяем доступность товара на складе
 
-        return shoppingCartMapper.toDto(shoppingCartRepository.save(shoppingCart));
+        log.debug("Booked products: {}", bookedProductsDto);
+
+        return shoppingCartMapper.toDto(shoppingCart);
     }
 
     @Transactional
@@ -108,12 +102,14 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
         validateUsername(username);
 
         ShoppingCart shoppingCart = shoppingCartRepository.findByUsernameIgnoreCaseAndActiveTrue(username)
-                .orElseThrow(() -> new NoProductsInShoppingCartException("No shopping cart for username = " + username));
+                .orElseThrow(() ->
+                        new NoProductsInShoppingCartException("No shopping cart for username = " + username));
 
         Map<UUID, Long> products = shoppingCart.getProducts();
 
         if (!products.containsKey(request.productId())) {
-            throw new NoProductsInShoppingCartException("No products in shopping cart for productId = " + request.productId());
+            throw new NoProductsInShoppingCartException("No products in shopping cart for productId = " +
+                                                        request.productId());
         }
 
         products.put(request.productId(), request.newQuantity());
@@ -130,5 +126,13 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
         if (username == null || username.isEmpty()) {
             throw new NotAuthorizedUserException("Username cannot be null or empty");
         }
+    }
+
+    private ShoppingCart getOrCreateShoppingCart(String username) {
+        return shoppingCartRepository.findByUsernameIgnoreCaseAndActiveTrue(username)
+                .orElseGet(() -> shoppingCartRepository.save(ShoppingCart.builder()
+                        .username(username)
+                        .active(true)
+                        .build()));
     }
 }

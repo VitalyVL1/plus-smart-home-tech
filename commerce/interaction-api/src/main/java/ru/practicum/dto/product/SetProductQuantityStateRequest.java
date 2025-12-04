@@ -1,20 +1,22 @@
 package ru.practicum.dto.product;
 
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.UUID;
 
 
-/**
- * Запрос на установку состояния количества товара.
- *
- * @param productId     идентификатор товара
- * @param quantityState состояние количества товара
- */
-public record SetProductQuantityStateRequest(
-        @NotNull
-        UUID productId,
-        @NotNull
-        QuantityState quantityState
-) {
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class SetProductQuantityStateRequest {
+    @NotNull
+    private UUID productId;
+
+    @NotNull
+    private QuantityState quantityState;
 }

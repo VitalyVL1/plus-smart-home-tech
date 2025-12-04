@@ -55,9 +55,9 @@ public class ShoppingStoreServiceImp implements ShoppingStoreService {
     @Transactional
     @Override
     public Boolean setQuantityState(SetProductQuantityStateRequest request) {
-        Product productToSetQuantityState = getProduct(request.productId());
+        Product productToSetQuantityState = getProduct(request.getProductId());
         try {
-            productToSetQuantityState.setQuantityState(request.quantityState());
+            productToSetQuantityState.setQuantityState(request.getQuantityState());
             return true;
         } catch (Exception e) {
             log.error("Error setting quantity state", e);

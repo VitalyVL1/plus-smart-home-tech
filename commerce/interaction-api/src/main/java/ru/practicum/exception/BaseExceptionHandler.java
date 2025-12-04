@@ -16,6 +16,27 @@ import java.util.stream.Collectors;
 @Slf4j
 public abstract class BaseExceptionHandler {
 
+    @ExceptionHandler(ResourceNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handleResourceNotFoundException(
+            ResourceNotFoundException ex) {
+
+        List<ErrorResponse.Issue> issues = List.of(
+                ErrorResponse.Issue.builder()
+                        .location(ex.getClass().getSimpleName())
+                        .description(ex.getMessage())
+                        .build()
+        );
+
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .message("Resource not found")
+                .issues(issues)
+                .build();
+
+        log.warn("Resource not found: {}", ex.getMessage(), ex);
+        return errorResponse;
+    }
+
     @ExceptionHandler(ServiceTemporaryUnavailableException.class)
     @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
     public ErrorResponse handleServiceTemporaryUnavailable(

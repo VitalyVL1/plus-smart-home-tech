@@ -88,11 +88,11 @@ public class ShoppingStoreController implements ShoppingStoreClient {
     @PostMapping("/quantityState")
     @ResponseStatus(HttpStatus.OK)
     public Boolean setQuantityState(@Valid @ModelAttribute SetProductQuantityStateRequest request) {
-        log.info("Setting quantity state for product with id {}", request.productId());
+        log.info("Setting quantity state for product with id {}", request.getProductId());
         try {
             return shoppingStoreService.setQuantityState(request);
         } catch (Exception e) {
-            log.error("Error setting quantity state for product with id {}", request.productId(), e);
+            log.error("Error setting quantity state for product with id {}", request.getProductId(), e);
             throw e;
         }
     }

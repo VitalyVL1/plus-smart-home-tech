@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import ru.practicum.client.ShoppingStoreFeignClient;
 import ru.practicum.dto.cart.ShoppingCartDto;
 import ru.practicum.dto.product.QuantityState;
@@ -12,9 +13,7 @@ import ru.practicum.dto.warehouse.AddProductToWarehouseRequest;
 import ru.practicum.dto.warehouse.AddressDto;
 import ru.practicum.dto.warehouse.BookedProductsDto;
 import ru.practicum.dto.warehouse.NewProductInWarehouseRequest;
-import ru.practicum.exception.NoSpecifiedProductInWarehouseException;
-import ru.practicum.exception.ProductInShoppingCartLowQuantityInWarehouse;
-import ru.practicum.exception.SpecifiedProductAlreadyInWarehouseException;
+import ru.practicum.exception.*;
 import ru.practicum.mapper.AddressMapper;
 import ru.practicum.mapper.DimensionMapper;
 import ru.practicum.model.BookedProduct;
@@ -33,6 +32,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class WarehouseServiceImpl implements WarehouseService {
+    private final TransactionTemplate transactionTemplate;
     private final WarehouseRepository warehouseRepository;
     private final WarehouseProductRepository warehouseProductRepository;
     private final BookedProductRepository bookedProductRepository;
@@ -106,72 +106,81 @@ public class WarehouseServiceImpl implements WarehouseService {
                 .build();
     }
 
-    @Transactional
     @Override
     public void addItem(AddProductToWarehouseRequest request) {
-        UUID productId = UUID.fromString(request.productId());
-
         //в рамках ТЗ работаем с одним складом, то будет только 1 элемент или пусто
         // TODO: в случае работы с несколькими складами, нужно будет:
         // 1. менять логику самого запроса (указывать конкретный склад)
         // 2. менять логику процесса добавления на конкретный склад
-        WarehouseProduct warehouseProduct = warehouseProductRepository.findByProductId(productId)
-                .orElseThrow(() -> new NoSpecifiedProductInWarehouseException(
-                        String.format("Product which id = %s not found", productId)));
 
-        warehouseProduct.setQuantity(warehouseProduct.getQuantity() + request.quantity());
+        WarehouseProduct updatedWarehouseProduct = transactionTemplate.execute(status -> {
+            WarehouseProduct warehouseProduct = warehouseProductRepository.findByProductId(request.productId())
+                    .orElseThrow(() -> new NoSpecifiedProductInWarehouseException(
+                            String.format("Product which id = %s not found", request.productId())));
 
-        //updateQuantityState(warehouseProduct);
+            warehouseProduct.setQuantity(warehouseProduct.getQuantity() + request.quantity());
+
+            return warehouseProduct;
+        });
+
+        updateQuantityState(updatedWarehouseProduct); //обновляем состояние на складе
     }
 
-    @Transactional
+    // TODO: При добавлении поддержки нескольких складов необходимо:
+    // 1. Изменить логику резервирования - распределять товары между складами
+    // 2. Добавить алгоритм выбора складов (ближайший, с наибольшим запасом и т.д.)
+    // 3. Учитывать остатки на каждом складе при распределении
+    // 4. Возможно добавить приоритеты складов
+    // Пример будущей реализации:
+    // Map<UUID, Long> remainingDemand = new HashMap<>(shoppingCartProducts);
+    // for (каждый товар в заказе) {
+    //   for (каждый склад с этим товаром) {
+    //     Long reserve = Math.min(remainingDemand.get(productId), stock.getQuantity());
+    //     // создать BookedProduct с reserve количеством
+    //     // уменьшить remainingDemand и остатки на складе
+    //   }
+    // }
     @Override
     public void bookProducts(ShoppingCartDto shoppingCart) {
         Map<UUID, Long> shoppingCartProducts = shoppingCart.products();
 
-        List<WarehouseProduct> products = warehouseProductRepository
-                .findAllByProductIdIn(shoppingCartProducts.keySet());
+        List<WarehouseProduct> updatedWarehouseProducts =
+                transactionTemplate.execute(status -> {
+                            List<WarehouseProduct> products = warehouseProductRepository
+                                    .findAllByProductIdIn(shoppingCartProducts.keySet());
 
-        // TODO: При добавлении поддержки нескольких складов необходимо:
-        // 1. Изменить логику резервирования - распределять товары между складами
-        // 2. Добавить алгоритм выбора складов (ближайший, с наибольшим запасом и т.д.)
-        // 3. Учитывать остатки на каждом складе при распределении
-        // 4. Возможно добавить приоритеты складов
-        // Пример будущей реализации:
-        // Map<UUID, Long> remainingDemand = new HashMap<>(shoppingCartProducts);
-        // for (каждый товар в заказе) {
-        //   for (каждый склад с этим товаром) {
-        //     Long reserve = Math.min(remainingDemand.get(productId), stock.getQuantity());
-        //     // создать BookedProduct с reserve количеством
-        //     // уменьшить remainingDemand и остатки на складе
-        //   }
-        // }
-        List<BookedProduct> bookedProducts =
-                products.stream()
-                        .map(product -> BookedProduct.builder()
-                                .shoppingCartId(shoppingCart.shoppingCartId())
-                                .warehouseProduct(product)
-                                .quantity(shoppingCartProducts.get(product.getProductId()))
-                                .build())
-                        .toList();
 
-        // сохраняем забронированные товары в базу данных
-        bookedProductRepository.saveAll(bookedProducts);
+                            List<BookedProduct> bookedProducts =
+                                    products.stream()
+                                            .map(product -> BookedProduct.builder()
+                                                    .shoppingCartId(shoppingCart.shoppingCartId())
+                                                    .warehouseProduct(product)
+                                                    .quantity(shoppingCartProducts.get(product.getProductId()))
+                                                    .build())
+                                            .toList();
 
-        // уменьшаем количество товара на складе
-        products.forEach(product ->
-                product.setQuantity(product.getQuantity() - shoppingCartProducts.get(product.getProductId())));
+                            // сохраняем забронированные товары в базу данных
+                            bookedProductRepository.saveAll(bookedProducts);
 
-        products.forEach(this::updateQuantityState); //обновляем статус в магазине
+                            // уменьшаем количество товара на складе
+                            products.forEach(product ->
+                                    product.setQuantity(
+                                            product.getQuantity() -
+                                            shoppingCartProducts.get(product.getProductId())));
+                            return products;
+                        }
+                );
+
+        updatedWarehouseProducts.forEach(this::updateQuantityState); //обновляем статус в магазине
     }
 
+    // в рамках ТЗ работаем с одним складом,
+    // то не важно адрес какого склада мы запрашиваем
+    // TODO: при добавлении поддержки работы с несколькими складами необходимо:
+    // 1. менять логику самого запроса
+    // 2. менять логику получения адреса склада
     @Override
     public AddressDto getAddress() {
-        // в рамках ТЗ работаем с одним складом,
-        // то не важно адрес какого склада мы запрашиваем
-        // TODO: при добавлении поддержки работы с несколькими складами необходимо:
-        // 1. менять логику самого запроса
-        // 2. менять логику получения адреса склада
         Warehouse warehouse = getRandomWarehouse();
         return addressMapper.toDto(warehouse.getAddress());
     }
@@ -184,17 +193,30 @@ public class WarehouseServiceImpl implements WarehouseService {
     }
 
     private void updateQuantityState(WarehouseProduct warehouseProduct) {
+        if (warehouseProduct == null) {
+            return;
+        }
 
         QuantityState quantityState = determineQuantityState(warehouseProduct.getQuantity());
 
-        log.warn("Setting quantity state for product {} to {}", warehouseProduct.getProductId(), quantityState);
+        log.debug("Setting quantity state for product {} to {}", warehouseProduct.getProductId(), quantityState);
 
         SetProductQuantityStateRequest request = new SetProductQuantityStateRequest(
                 warehouseProduct.getProductId(),
                 determineQuantityState(warehouseProduct.getQuantity()));
-
-        if (!shoppingStoreClient.setQuantityState(request)) {
-            throw new RuntimeException("Unable to set quantity state");
+        //отправляем данные в магазин, в случае любой ошибки просто логируем и продложаем работу
+        log.debug("Sending request to set quantity state for product {} to {}",
+                warehouseProduct.getProductId(), quantityState);
+        try {
+            shoppingStoreClient.setQuantityState(request);
+        } catch (ResourceNotFoundException e) {
+            log.warn("Product not in store {}", warehouseProduct.getProductId());
+        } catch (BadRequestException e) {
+            log.warn("Invalid quantity state for product {}", warehouseProduct.getProductId());
+        } catch (ServiceTemporaryUnavailableException e) {
+            log.warn("Service temporary unavailable {}", warehouseProduct.getProductId());
+        } catch (Exception e) {
+            log.warn("Unknown error {}", warehouseProduct.getProductId());
         }
     }
 
