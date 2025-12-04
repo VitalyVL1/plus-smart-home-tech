@@ -8,15 +8,24 @@ import lombok.Setter;
 
 import java.util.UUID;
 
-
+/**
+ * Запрос на изменение состояния количества товара.
+ */
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class SetProductQuantityStateRequest {
+
+    /**
+     * ID товара.
+     */
     @NotNull
     private UUID productId;
 
+    /**
+     * Новое состояние количества.
+     */
     @NotNull
     private QuantityState quantityState;
 }

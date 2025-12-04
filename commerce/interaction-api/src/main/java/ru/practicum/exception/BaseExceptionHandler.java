@@ -13,6 +13,9 @@ import ru.practicum.dto.exception.ErrorResponse;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Базовый обработчик исключений для REST контроллеров.
+ */
 @Slf4j
 public abstract class BaseExceptionHandler {
 
