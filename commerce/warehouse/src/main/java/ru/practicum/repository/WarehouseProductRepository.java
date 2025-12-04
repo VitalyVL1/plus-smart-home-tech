@@ -8,9 +8,25 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+/**
+ * Репозиторий для работы с товарами на складе.
+ */
 public interface WarehouseProductRepository extends JpaRepository<WarehouseProduct, UUID> {
+
+    /**
+     * Находит товары на складе по списку ID товаров.
+     *
+     * @param productIdList список ID товаров
+     * @return список товаров на складе
+     */
     List<WarehouseProduct> findAllByProductIdIn(Set<UUID> productIdList);
 
-    //в случае работы с несколькими складами, такой метод будет выдавать список на разных складах
+    /**
+     * Находит товар на складе по ID товара.
+     * При работе с несколькими складами может возвращать любой товар.
+     *
+     * @param productId ID товара
+     * @return товар на складе
+     */
     Optional<WarehouseProduct> findByProductId(UUID productId);
 }

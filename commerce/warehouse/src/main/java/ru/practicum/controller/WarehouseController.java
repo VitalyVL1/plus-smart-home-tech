@@ -14,6 +14,9 @@ import ru.practicum.dto.warehouse.BookedProductsDto;
 import ru.practicum.dto.warehouse.NewProductInWarehouseRequest;
 import ru.practicum.service.WarehouseService;
 
+/**
+ * Контроллер для управления складом.
+ */
 @LogAllMethods
 @RestController
 @RequestMapping("/api/v1/warehouse")

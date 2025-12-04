@@ -28,6 +28,9 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/**
+ * Реализация сервиса управления складом.
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -106,12 +109,12 @@ public class WarehouseServiceImpl implements WarehouseService {
                 .build();
     }
 
+    //в рамках ТЗ работаем с одним складом, то будет только 1 элемент или пусто
+    // TODO: в случае работы с несколькими складами, нужно будет:
+    // 1. менять логику самого запроса (указывать конкретный склад)
+    // 2. менять логику процесса добавления на конкретный склад
     @Override
     public void addItem(AddProductToWarehouseRequest request) {
-        //в рамках ТЗ работаем с одним складом, то будет только 1 элемент или пусто
-        // TODO: в случае работы с несколькими складами, нужно будет:
-        // 1. менять логику самого запроса (указывать конкретный склад)
-        // 2. менять логику процесса добавления на конкретный склад
 
         WarehouseProduct updatedWarehouseProduct = transactionTemplate.execute(status -> {
             WarehouseProduct warehouseProduct = warehouseProductRepository.findByProductId(request.productId())

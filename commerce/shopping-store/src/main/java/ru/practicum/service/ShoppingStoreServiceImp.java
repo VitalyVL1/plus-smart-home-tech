@@ -17,6 +17,9 @@ import ru.practicum.repository.ShoppingStoreRepository;
 
 import java.util.UUID;
 
+/**
+ * Реализация сервиса управления товарами магазина.
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j

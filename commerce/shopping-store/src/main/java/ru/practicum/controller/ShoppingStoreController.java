@@ -19,6 +19,9 @@ import ru.practicum.service.ShoppingStoreService;
 
 import java.util.UUID;
 
+/**
+ * Контроллер для управления товарами магазина.
+ */
 @LogAllMethods
 @RestController
 @RequestMapping("/api/v1/shopping-store")

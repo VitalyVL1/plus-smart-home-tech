@@ -9,6 +9,9 @@ import ru.practicum.dto.exception.ErrorResponse;
 
 import java.util.List;
 
+/**
+ * Обработчик исключений для контроллера товаров.
+ */
 @RestControllerAdvice
 @Slf4j
 public class ErrorHandler extends BaseExceptionHandler {

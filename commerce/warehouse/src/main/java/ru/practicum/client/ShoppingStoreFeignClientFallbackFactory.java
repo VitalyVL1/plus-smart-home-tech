@@ -12,6 +12,9 @@ import ru.practicum.exception.ServiceTemporaryUnavailableException;
 
 import java.util.UUID;
 
+/**
+ * Фабрика fallback для Feign клиента магазина.
+ */
 @Component
 @Slf4j
 public class ShoppingStoreFeignClientFallbackFactory implements FallbackFactory<ShoppingStoreFeignClient> {
@@ -55,7 +58,5 @@ public class ShoppingStoreFeignClientFallbackFactory implements FallbackFactory<
                 return null;
             }
         };
-
     }
 }
-
