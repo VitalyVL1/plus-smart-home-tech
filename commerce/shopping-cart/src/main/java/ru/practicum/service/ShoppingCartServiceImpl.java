@@ -18,6 +18,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Реализация сервиса управления корзиной покупок.
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j

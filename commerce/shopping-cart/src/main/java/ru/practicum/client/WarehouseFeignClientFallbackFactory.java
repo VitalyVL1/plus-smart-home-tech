@@ -10,9 +10,26 @@ import ru.practicum.dto.warehouse.BookedProductsDto;
 import ru.practicum.dto.warehouse.NewProductInWarehouseRequest;
 import ru.practicum.exception.ServiceTemporaryUnavailableException;
 
+/**
+ * Фабрика fallback для Feign клиента склада.
+ * <p>
+ * Создает резервную реализацию {@link WarehouseFeignClient},
+ * которая вызывается при сбоях в основном сервисе.
+ */
 @Component
 @Slf4j
 public class WarehouseFeignClientFallbackFactory implements FallbackFactory<WarehouseFeignClient> {
+
+    /**
+     * Создает fallback реализацию клиента склада.
+     * <p>
+     * При сбоях в основном сервисе все методы возвращают
+     * {@link ServiceTemporaryUnavailableException} для
+     * индикации временной недоступности сервиса.
+     *
+     * @param cause причина сбоя
+     * @return fallback реализация клиента
+     */
     @Override
     public WarehouseFeignClient create(Throwable cause) {
         return new WarehouseFeignClient() {
