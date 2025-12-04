@@ -4,7 +4,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.client.WareHouseFeignClient;
+import org.springframework.transaction.support.TransactionTemplate;
+import ru.practicum.client.WarehouseFeignClient;
 import ru.practicum.dto.cart.ChangeProductQuantityRequest;
 import ru.practicum.dto.cart.ShoppingCartDto;
 import ru.practicum.dto.warehouse.BookedProductsDto;
@@ -24,7 +25,7 @@ import java.util.UUID;
 public class ShoppingCartServiceImpl implements ShoppingCartService {
     private final ShoppingCartRepository shoppingCartRepository;
     private final ShoppingCartMapper shoppingCartMapper;
-    private final WareHouseFeignClient warehouseClient;
+    private final WarehouseFeignClient warehouseClient;
 
     @Override
     public ShoppingCartDto getShoppingCartByUsername(String username) {
@@ -37,6 +38,7 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
     @Override
     public ShoppingCartDto addItemToShoppingCart(String username, Map<UUID, Long> products, boolean mergeQuantities) {
         validateUsername(username);
+
         ShoppingCart shoppingCart = getOrCreateShoppingCart(username); // получаем имеющуюся или создаем новую корзину для пользователя
 
         if (mergeQuantities) {
@@ -85,7 +87,9 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
                 .orElseThrow(() -> new NoProductsInShoppingCartException("No shopping cart for username = " + username));
 
         Map<UUID, Long> products = shoppingCart.getProducts();
-        List<UUID> notFoundItems = items.stream().filter(item -> !products.containsKey(item)).toList();
+        List<UUID> notFoundItems = items.stream()
+                .filter(item -> !products.containsKey(item))
+                .toList();
 
         if (!notFoundItems.isEmpty()) {
             throw new NoProductsInShoppingCartException("No products in shopping cart for items = " + notFoundItems);

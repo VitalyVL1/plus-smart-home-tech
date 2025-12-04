@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.dto.product.ProductCategory;
 import ru.practicum.dto.product.ProductDto;
 import ru.practicum.dto.product.SetProductQuantityStateRequest;
-import ru.practicum.validator.ValidPageable;
+import ru.practicum.annotation.validator.ValidPageable;
 
 import java.util.UUID;
 

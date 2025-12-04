@@ -4,7 +4,7 @@ import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.dto.cart.ChangeProductQuantityRequest;
 import ru.practicum.dto.cart.ShoppingCartDto;
-import ru.practicum.validator.ValidCartItems;
+import ru.practicum.annotation.validator.ValidCartItems;
 
 import java.util.List;
 import java.util.Map;
