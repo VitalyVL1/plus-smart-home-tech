@@ -213,7 +213,7 @@ public class WarehouseServiceImpl implements WarehouseService {
         try {
             shoppingStoreClient.setQuantityState(request);
         } catch (ResourceNotFoundException e) {
-            log.warn("Product not in store {}", warehouseProduct.getProductId());
+            log.warn("Product {} not in store", warehouseProduct.getProductId());
         } catch (BadRequestException e) {
             log.warn("Invalid quantity state for product {}", warehouseProduct.getProductId());
         } catch (ServiceTemporaryUnavailableException e) {

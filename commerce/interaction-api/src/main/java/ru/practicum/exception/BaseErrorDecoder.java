@@ -16,17 +16,18 @@ public abstract class BaseErrorDecoder implements ErrorDecoder {
     public Exception decode(String methodKey, Response response) {
         HttpStatus status = HttpStatus.valueOf(response.status());
 
-        log.warn("Feign error for method: {}, status: {}", methodKey, status);
-
         if (status == HttpStatus.NOT_FOUND) {
+            log.debug("Not found error {} for {}", status, methodKey);
             return new ResourceNotFoundException("Resource not found: " + methodKey);
         }
 
         if (status.is5xxServerError()) {
+            log.warn("Server error {} for {}", status, methodKey);
             return new ServiceTemporaryUnavailableException("Service temporary unavailable: " + methodKey);
         }
 
         if (status.is4xxClientError()) {
+            log.debug("Client error {} for {}", status, methodKey);
             return new BadRequestException("Service error: " + methodKey + ", status: " + status);
         }
 

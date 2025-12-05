@@ -13,6 +13,12 @@ spring:
 server:
   port: 0 # Порт сервера. Значение 0 означает, что порт будет назначен автоматически
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,configprops,loggers
+
 eureka:
   instance:
     lease-renewal-interval-in-seconds: 5 # Интервал обновления статуса инстанса в секундах

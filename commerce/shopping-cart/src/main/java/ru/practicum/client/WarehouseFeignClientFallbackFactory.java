@@ -8,6 +8,8 @@ import ru.practicum.dto.warehouse.AddProductToWarehouseRequest;
 import ru.practicum.dto.warehouse.AddressDto;
 import ru.practicum.dto.warehouse.BookedProductsDto;
 import ru.practicum.dto.warehouse.NewProductInWarehouseRequest;
+import ru.practicum.exception.BadRequestException;
+import ru.practicum.exception.ResourceNotFoundException;
 import ru.practicum.exception.ServiceTemporaryUnavailableException;
 
 /**
@@ -20,40 +22,43 @@ import ru.practicum.exception.ServiceTemporaryUnavailableException;
 @Slf4j
 public class WarehouseFeignClientFallbackFactory implements FallbackFactory<WarehouseFeignClient> {
 
-    /**
-     * Создает fallback реализацию клиента склада.
-     * <p>
-     * При сбоях в основном сервисе все методы возвращают
-     * {@link ServiceTemporaryUnavailableException} для
-     * индикации временной недоступности сервиса.
-     *
-     * @param cause причина сбоя
-     * @return fallback реализация клиента
-     */
     @Override
     public WarehouseFeignClient create(Throwable cause) {
         return new WarehouseFeignClient() {
             @Override
             public void addNewItemToWarehouse(NewProductInWarehouseRequest request) {
-                log.error("Failed to add new item to warehouse", cause);
-                throw new ServiceTemporaryUnavailableException("Service is temporarily unavailable");
+                fastFallBack(cause);
             }
 
             @Override
             public BookedProductsDto checkQuantityInWarehouse(ShoppingCartDto shoppingCart) {
-                log.error("Failed to check quantity in warehouse", cause);
-                throw new ServiceTemporaryUnavailableException("Service is temporarily unavailable");
+                fastFallBack(cause);
+                return null;
             }
 
             @Override
             public void addItemToWarehouse(AddProductToWarehouseRequest request) {
-                log.error("Failed to add item to warehouse", cause);
-                throw new ServiceTemporaryUnavailableException("Service is temporarily unavailable");
+                fastFallBack(cause);
             }
 
             @Override
             public AddressDto getWarehouseAddress() {
-                log.error("Failed to get warehouse address", cause);
+                fastFallBack(cause);
+                return null;
+            }
+
+            private void fastFallBack(Throwable cause) {
+                if (cause instanceof ResourceNotFoundException) {
+                    log.warn("Not found (404): ", cause);
+                    throw (ResourceNotFoundException) cause;
+                }
+
+                if (cause instanceof BadRequestException) {
+                    log.warn("Bad request (4xx): ", cause);
+                    throw (BadRequestException) cause;
+                }
+
+                log.error("Server/network error ", cause);
                 throw new ServiceTemporaryUnavailableException("Service is temporarily unavailable");
             }
         };

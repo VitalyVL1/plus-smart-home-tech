@@ -1,52 +1,40 @@
 spring:
   jpa:
-    hibernate.ddl-auto: none
+    hibernate.ddl-auto: none                     # Отключить автоматическое создание и обновление таблиц Hibernate
     properties:
       hibernate:
-        jdbc.time_zone: UTC
-        format_sql: true
-    show-sql: true
-  database-platform: org.hibernate.dialect.PostgreSQLDialect
-  sql.init.mode: always
+        jdbc.time_zone: UTC                      # Установить временную зону БД в UTC для хранения дат
+        format_sql: true                         # Включить форматирование SQL запросов в логах для лучшей читаемости
+    show-sql: true                               # Выводить SQL запросы в консоль (только для разработки)
+  sql.init.mode: always                          # Всегда выполнять SQL скрипты инициализации при запуске
   datasource:
-    url: jdbc:postgresql://localhost:5432/smarthomedb?currentSchema=commerce_store
-    driver-class-name: org.postgresql.Driver
-    username: postgres
-    password: 12345
+    url: jdbc:postgresql://localhost:5432/smarthomedb?currentSchema=commerce_store  # URL для подключения к PostgreSQL с указанием схемы
+    username: postgres                           # Имя пользователя для аутентификации в БД
+    password: 12345                              # Пароль для аутентификации в БД
+  cloud:
+    openfeign:
+      circuitbreaker:
+        enabled: true                            # Включить интеграцию Circuit Breaker с Feign клиентами
+        group:
+          enabled: true                          # Включить группировку Circuit Breaker по имени Feign клиента
+        alphanumeric-ids:
+          enabled: true                          # Генерировать имена Circuit Breaker без специальных символов
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,circuitbreakers
+        include: health,info,metrics,circuitbreakers,configprops,loggers,retries  # Список эндпоинтов Actuator для экспозиции через веб
 
-resilience4j.circuitbreaker:
-  configs:
-    # Базовая конфигурация по умолчанию
-    default:
-      slidingWindowType: COUNT_BASED        # Анализ по количеству вызовов
-      slidingWindowSize: 100                # Анализировать последние 100 вызовов
-      minimumNumberOfCalls: 10              # Минимальное кол-во вызовов для принятия решения
-      permittedNumberOfCallsInHalfOpenState: 3  # Тестовые вызовы в HALF_OPEN состоянии
-      automaticTransitionFromOpenToHalfOpenEnabled: true  # Автопереход OPEN → HALF_OPEN
-      writableStackTraceEnabled: false      # Без полных stack traces (экономия памяти)
-
-  instances:
-    # Склад - критичный для бизнеса, но может быть медленным
-    warehouse:
-      baseConfig: default                   # Наследуем базовые настройки
-      slidingWindowSize: 30                 # Анализировать только последние 30 вызовов
-      minimumNumberOfCalls: 5               # Всего 5 вызовов достаточно для анализа
-      failureRateThreshold: 20              # CB срабатывает при 20% ошибок
-      slowCallRateThreshold: 25             # CB срабатывает при 25% медленных вызовов
-      slowCallDurationThreshold: 1000       # Вызов считается медленным если > 1 сек
-      waitDurationInOpenState: 30000        # 30 секунд в OPEN состоянии (дольше для восстановления)
-
-    # Корзина товаров - нужен быстрый доступ к данным
-    shopping-cart:
-      baseConfig: default                   # Наследуем настройки из default
-      minimumNumberOfCalls: 20              # Больше вызовов для анализа (стабильность)
-      failureRateThreshold: 20              # CB срабатывает при 20% ошибок
-      slowCallRateThreshold: 25             # CB срабатывает при 25% медленных вызовов
-      slowCallDurationThreshold: 1000       # Вызов считается медленным если > 1 сек
-      waitDurationInOpenState: 5000         # 5 секунд в OPEN состоянии
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        slidingWindowSize: 10                     # Количество вызовов в скользящем окне для расчета статистики
+        minimumNumberOfCalls: 5                   # Минимальное количество вызовов перед оценкой состояния Circuit Breaker
+        failureRateThreshold: 50                  # Пороговое значение процента ошибок для перехода в состояние OPEN
+        waitDurationInOpenState: 5s               # Время ожидания в состоянии OPEN перед переходом в HALF_OPEN
+        permittedNumberOfCallsInHalfOpenState: 3  # Количество разрешенных тестовых вызовов в состоянии HALF_OPEN
+        ignoreExceptions:
+          - "ru.practicum.exception.ResourceNotFoundException"      # Игнорировать исключения 404 Not Found в статистике Circuit Breaker
+          - "ru.practicum.exception.BadRequestException"           # Игнорировать исключения 4xx Client Error в статистике Circuit Breaker
