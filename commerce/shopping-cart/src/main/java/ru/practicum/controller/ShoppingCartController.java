@@ -40,7 +40,7 @@ public class ShoppingCartController implements ShoppingCartClient {
     public ShoppingCartDto addItemToShoppingCart(
             @RequestParam String username,
             @RequestBody @ValidCartItems Map<UUID, Long> items) {
-        return shoppingCartService.addItemToShoppingCart(username, items, true);
+        return shoppingCartService.addItemToShoppingCart(username, items);
     }
 
     @Override

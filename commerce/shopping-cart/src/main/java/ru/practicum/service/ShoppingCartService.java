@@ -23,12 +23,11 @@ public interface ShoppingCartService {
     /**
      * Добавляет товары в корзину.
      *
-     * @param username        имя пользователя
-     * @param products        товары для добавления
-     * @param mergeQuantities объединять ли количество существующих товаров
+     * @param username имя пользователя
+     * @param products товары для добавления
      * @return обновленная корзина
      */
-    ShoppingCartDto addItemToShoppingCart(String username, Map<UUID, Long> products, boolean mergeQuantities);
+    ShoppingCartDto addItemToShoppingCart(String username, Map<UUID, Long> products);
 
     /**
      * Деактивирует корзину пользователя.

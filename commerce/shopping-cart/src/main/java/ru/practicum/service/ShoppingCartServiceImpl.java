@@ -38,20 +38,15 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
 
     @Transactional
     @Override
-    public ShoppingCartDto addItemToShoppingCart(String username, Map<UUID, Long> products, boolean mergeQuantities) {
+    public ShoppingCartDto addItemToShoppingCart(String username, Map<UUID, Long> products) {
         validateUsername(username);
 
         ShoppingCart shoppingCart = getOrCreateShoppingCart(username); // получаем имеющуюся или создаем новую корзину для пользователя
 
-        if (mergeQuantities) {
-            // Суммирование количества (обычное поведение)
-            products.forEach((productId, quantity) ->
-                    shoppingCart.getProducts().merge(productId, quantity, Long::sum)
-            );
-        } else {
-            // Замена количества (явная установка)
-            shoppingCart.getProducts().putAll(products);
-        }
+        // Суммирование количества
+        products.forEach((productId, quantity) ->
+                shoppingCart.getProducts().merge(productId, quantity, Long::sum)
+        );
 
         ShoppingCartDto shoppingCartDto = shoppingCartMapper.toDto(shoppingCart);
         BookedProductsDto bookedProductsDto = warehouseClient.checkQuantityInWarehouse(shoppingCartDto); // проверяем доступность товара на складе
