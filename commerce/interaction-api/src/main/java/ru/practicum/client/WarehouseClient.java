@@ -6,10 +6,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import ru.practicum.dto.cart.ShoppingCartDto;
-import ru.practicum.dto.warehouse.AddProductToWarehouseRequest;
-import ru.practicum.dto.warehouse.AddressDto;
-import ru.practicum.dto.warehouse.BookedProductsDto;
-import ru.practicum.dto.warehouse.NewProductInWarehouseRequest;
+import ru.practicum.dto.warehouse.*;
+
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * Клиент для работы со складом.
@@ -48,4 +48,16 @@ public interface WarehouseClient {
      */
     @GetMapping("/address")
     AddressDto getWarehouseAddress();
+
+    @PostMapping("/shipped")
+    void shippedToDelivery(@RequestBody @Valid ShippedToDeliveryRequest request);
+
+    @PostMapping("/return")
+    void returnToWarehouse(@RequestBody Map<UUID, Long> products);
+
+    @PostMapping("/assembly")
+    BookedProductsDto assemblyProductForOrderFromShoppingCart(
+            @RequestBody @Valid
+            AssemblyProductsForOrderRequest request);
+
 }

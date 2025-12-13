@@ -8,11 +8,11 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.annotation.LogAllMethods;
 import ru.practicum.client.WarehouseClient;
 import ru.practicum.dto.cart.ShoppingCartDto;
-import ru.practicum.dto.warehouse.AddProductToWarehouseRequest;
-import ru.practicum.dto.warehouse.AddressDto;
-import ru.practicum.dto.warehouse.BookedProductsDto;
-import ru.practicum.dto.warehouse.NewProductInWarehouseRequest;
+import ru.practicum.dto.warehouse.*;
 import ru.practicum.service.WarehouseService;
+
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * Контроллер для управления складом.
@@ -50,5 +50,28 @@ public class WarehouseController implements WarehouseClient {
     @ResponseStatus(HttpStatus.OK)
     public AddressDto getWarehouseAddress() {
         return warehouseService.getAddress();
+    }
+
+    @Override
+    @PostMapping("/shipped")
+    @ResponseStatus(HttpStatus.OK)
+    public void shippedToDelivery(@RequestBody @Valid ShippedToDeliveryRequest request) {
+        warehouseService.shippedToDelivery(request);
+    }
+
+    @Override
+    @PostMapping("/return")
+    @ResponseStatus(HttpStatus.OK)
+    public void returnToWarehouse(@RequestBody Map<UUID, Long> products) {
+        warehouseService.returnToWarehouse(products);
+    }
+
+    @Override
+    @PostMapping("/assembly")
+    @ResponseStatus(HttpStatus.OK)
+    public BookedProductsDto assemblyProductForOrderFromShoppingCart(
+            @RequestBody @Valid
+            AssemblyProductsForOrderRequest request) {
+        return warehouseService.assemblyProductForOrder(request);
     }
 }

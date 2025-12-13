@@ -28,6 +28,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+//TODO
+
 /**
  * Реализация сервиса управления складом.
  */
@@ -89,8 +91,8 @@ public class WarehouseServiceImpl implements WarehouseService {
                 .toList();
 
         if (!notEnoughProducts.isEmpty()) {
-            throw new ProductInShoppingCartLowQuantityInWarehouse("Not enough products in warehouse, ids = " +
-                                                                  notEnoughProducts);
+            throw new ProductInShoppingCartNotInWarehouse("Out of stock products ids: { " +
+                                                          notEnoughProducts + " }");
         }
 
         // рассчитываем вес и объем доставки

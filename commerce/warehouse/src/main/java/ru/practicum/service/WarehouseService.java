@@ -1,10 +1,10 @@
 package ru.practicum.service;
 
 import ru.practicum.dto.cart.ShoppingCartDto;
-import ru.practicum.dto.warehouse.AddProductToWarehouseRequest;
-import ru.practicum.dto.warehouse.AddressDto;
-import ru.practicum.dto.warehouse.BookedProductsDto;
-import ru.practicum.dto.warehouse.NewProductInWarehouseRequest;
+import ru.practicum.dto.warehouse.*;
+
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * Сервис для управления складом.
@@ -46,4 +46,11 @@ public interface WarehouseService {
      * @param shoppingCart корзина с товарами для бронирования
      */
     void bookProducts(ShoppingCartDto shoppingCart);
+
+    void shippedToDelivery(ShippedToDeliveryRequest request);
+
+    void returnToWarehouse(Map<UUID, Long> products);
+
+    BookedProductsDto assemblyProductForOrder(AssemblyProductsForOrderRequest request);
+
 }

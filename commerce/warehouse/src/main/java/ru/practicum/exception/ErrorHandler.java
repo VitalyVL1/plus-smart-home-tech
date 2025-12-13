@@ -34,6 +34,12 @@ public class ErrorHandler extends BaseExceptionHandler {
         return createWarehouseErrorResponse("Insufficient stock in warehouse", e);
     }
 
+    @ExceptionHandler(ProductInShoppingCartNotInWarehouse.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponse handleProductInShoppingCartNotInWarehouse(ProductInShoppingCartNotInWarehouse e) {
+        return createWarehouseErrorResponse("Out of stock in warehouse", e);
+    }
+
     private ErrorResponse createWarehouseErrorResponse(String message, Exception e) {
         List<ErrorResponse.Issue> issues = List.of(
                 ErrorResponse.Issue.builder()
