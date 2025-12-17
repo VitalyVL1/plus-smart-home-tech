@@ -22,7 +22,7 @@ public class DeliveryFeignClientConfig {
      * @return декодер ошибок
      */
     @Bean
-    public ErrorDecoder errorDecoder() {
+    public ErrorDecoder deliveryErrorDecoder() {
         return new DeliveryErrorDecoder();
     }
 }

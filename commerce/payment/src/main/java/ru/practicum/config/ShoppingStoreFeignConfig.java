@@ -17,7 +17,7 @@ public class ShoppingStoreFeignConfig {
      * @return декодер ошибок
      */
     @Bean
-    public ErrorDecoder errorDecoder() {
+    public ErrorDecoder shoppingStoreErrorDecoder() {
         return new ShoppingStoreErrorDecoder();
     }
 }

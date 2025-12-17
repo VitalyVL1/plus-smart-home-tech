@@ -9,10 +9,7 @@ import ru.practicum.client.ShoppingStoreFeignClient;
 import ru.practicum.dto.cart.ShoppingCartDto;
 import ru.practicum.dto.product.QuantityState;
 import ru.practicum.dto.product.SetProductQuantityStateRequest;
-import ru.practicum.dto.warehouse.AddProductToWarehouseRequest;
-import ru.practicum.dto.warehouse.AddressDto;
-import ru.practicum.dto.warehouse.BookedProductsDto;
-import ru.practicum.dto.warehouse.NewProductInWarehouseRequest;
+import ru.practicum.dto.warehouse.*;
 import ru.practicum.exception.*;
 import ru.practicum.mapper.AddressMapper;
 import ru.practicum.mapper.DimensionMapper;
@@ -23,12 +20,11 @@ import ru.practicum.repository.BookedProductRepository;
 import ru.practicum.repository.WarehouseProductRepository;
 import ru.practicum.repository.WarehouseRepository;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
-//TODO
 
 /**
  * Реализация сервиса управления складом.
@@ -70,45 +66,12 @@ public class WarehouseServiceImpl implements WarehouseService {
         products.add(newProduct);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public BookedProductsDto checkQuantityInWarehouse(ShoppingCartDto shoppingCart) {
         Map<UUID, Long> shoppingCartProducts = shoppingCart.products();
-
-        List<WarehouseProduct> products = warehouseProductRepository
-                .findAllByProductIdIn(shoppingCartProducts.keySet());
-
-        Map<UUID, Long> availableProducts = products.stream()
-                .collect(Collectors.toMap(
-                        WarehouseProduct::getProductId,
-                        WarehouseProduct::getQuantity,
-                        Long::sum));
-
-        List<UUID> notEnoughProducts = shoppingCartProducts.entrySet().stream()
-                .filter(entry -> {
-                    Long available = availableProducts.get(entry.getKey());
-                    return available == null || available < entry.getValue();
-                }).map(Map.Entry::getKey)
-                .toList();
-
-        if (!notEnoughProducts.isEmpty()) {
-            throw new ProductInShoppingCartNotInWarehouse("Out of stock products ids: { " +
-                                                          notEnoughProducts + " }");
-        }
-
-        // рассчитываем вес и объем доставки
-        Double deliveryWeight = products.stream()
-                .mapToDouble(wp -> wp.getWeight() * shoppingCartProducts.get(wp.getProductId()))
-                .sum();
-        Double deliveryVolume = products.stream()
-                .mapToDouble(wp -> wp.getDimensions().getVolume() * shoppingCartProducts.get(wp.getProductId()))
-                .sum();
-        Boolean fragile = products.stream().anyMatch(WarehouseProduct::getFragile);
-
-        return BookedProductsDto.builder()
-                .deliveryWeight(deliveryWeight)
-                .deliveryVolume(deliveryVolume)
-                .fragile(fragile)
-                .build();
+        List<WarehouseProduct> availableProducts = checkAvailableProducts(shoppingCartProducts);
+        return determineBookedProducts(availableProducts, shoppingCartProducts);
     }
 
     //в рамках ТЗ работаем с одним складом, то будет только 1 элемент или пусто
@@ -146,37 +109,33 @@ public class WarehouseServiceImpl implements WarehouseService {
     //   }
     // }
     @Override
-    public void bookProducts(ShoppingCartDto shoppingCart) {
-        Map<UUID, Long> shoppingCartProducts = shoppingCart.products();
+    @Transactional
+    public BookedProductsDto assemblyProductForOrder(AssemblyProductsForOrderRequest request) {
+        Map<UUID, Long> assemblyProducts = request.products();
 
-        List<WarehouseProduct> updatedWarehouseProducts =
-                transactionTemplate.execute(status -> {
-                            List<WarehouseProduct> products = warehouseProductRepository
-                                    .findAllByProductIdIn(shoppingCartProducts.keySet());
+        List<WarehouseProduct> products = checkAvailableProducts(assemblyProducts);
 
+        // Создаем бронирования
+        List<BookedProduct> bookedProducts = products.stream()
+                .map(product -> BookedProduct.builder()
+                        .orderId(request.orderId())
+                        .warehouseProduct(product)
+                        .quantity(assemblyProducts.get(product.getProductId()))
+                        .build())
+                .toList();
 
-                            List<BookedProduct> bookedProducts =
-                                    products.stream()
-                                            .map(product -> BookedProduct.builder()
-                                                    .shoppingCartId(shoppingCart.shoppingCartId())
-                                                    .warehouseProduct(product)
-                                                    .quantity(shoppingCartProducts.get(product.getProductId()))
-                                                    .build())
-                                            .toList();
+        bookedProductRepository.saveAll(bookedProducts);
 
-                            // сохраняем забронированные товары в базу данных
-                            bookedProductRepository.saveAll(bookedProducts);
+        // Уменьшаем количество
+        products.forEach(product ->
+                product.setQuantity(
+                        product.getQuantity() -
+                        assemblyProducts.get(product.getProductId())));
 
-                            // уменьшаем количество товара на складе
-                            products.forEach(product ->
-                                    product.setQuantity(
-                                            product.getQuantity() -
-                                            shoppingCartProducts.get(product.getProductId())));
-                            return products;
-                        }
-                );
+        // updateQuantityState - не бросит исключение
+        products.forEach(this::updateQuantityState);
 
-        updatedWarehouseProducts.forEach(this::updateQuantityState); //обновляем статус в магазине
+        return determineBookedProducts(products, assemblyProducts);
     }
 
     // в рамках ТЗ работаем с одним складом,
@@ -188,6 +147,26 @@ public class WarehouseServiceImpl implements WarehouseService {
     public AddressDto getAddress() {
         Warehouse warehouse = getRandomWarehouse();
         return addressMapper.toDto(warehouse.getAddress());
+    }
+
+    // По спецификации метод не выбрасывает исключения если заказ отсутствует
+    @Override
+    @Transactional
+    public void shippedToDelivery(ShippedToDeliveryRequest request) {
+        List<BookedProduct> bookedProducts =
+                bookedProductRepository.findAllByOrderId(request.orderId());
+
+        bookedProducts.forEach(product -> product.setDeliveryId(request.deliveryId()));
+    }
+
+    // По спецификации метод не выбрасывает исключения если товар не найден
+    @Override
+    @Transactional
+    public void returnToWarehouse(Map<UUID, Long> products) {
+        List<WarehouseProduct> productsToReturn = warehouseProductRepository.findAllByProductIdIn(products.keySet());
+        productsToReturn.forEach(product ->
+                product.setQuantity(product.getQuantity() + products.get(product.getProductId())));
+        productsToReturn.forEach(this::updateQuantityState);
     }
 
     private Warehouse getRandomWarehouse() {
@@ -235,5 +214,63 @@ public class WarehouseServiceImpl implements WarehouseService {
         } else {
             return QuantityState.MANY;
         }
+    }
+
+    private List<WarehouseProduct> checkAvailableProducts(Map<UUID, Long> checkingProducts) {
+
+        if (checkingProducts == null || checkingProducts.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<WarehouseProduct> products = warehouseProductRepository
+                .findAllByProductIdIn(checkingProducts.keySet());
+
+        Map<UUID, Long> availableProducts = products.stream()
+                .collect(Collectors.toMap(
+                        WarehouseProduct::getProductId,
+                        WarehouseProduct::getQuantity,
+                        Long::sum));
+
+        List<UUID> notEnoughProducts = checkingProducts.entrySet().stream()
+                .filter(entry -> {
+                    Long available = availableProducts.get(entry.getKey());
+                    return available == null || available < entry.getValue();
+                }).map(Map.Entry::getKey)
+                .toList();
+
+        if (!notEnoughProducts.isEmpty()) {
+            throw new ProductInShoppingCartLowQuantityInWarehouse("Out of stock products ids: { " +
+                                                                  notEnoughProducts + " }");
+        }
+
+        return products;
+    }
+
+    private BookedProductsDto determineBookedProducts(
+            List<WarehouseProduct> availableProducts,
+            Map<UUID, Long> assemblyProducts) {
+
+        if (availableProducts == null || availableProducts.isEmpty()
+            || assemblyProducts == null || assemblyProducts.isEmpty()) {
+            return BookedProductsDto.builder().build();
+        }
+
+        Double deliveryWeight = availableProducts.stream()
+                .mapToDouble(wp ->
+                        wp.getWeight() * assemblyProducts.get(wp.getProductId()))
+                .sum();
+
+        Double deliveryVolume = availableProducts.stream()
+                .mapToDouble(wp ->
+                        wp.getDimensions().getVolume() * assemblyProducts.get(wp.getProductId()))
+                .sum();
+
+        Boolean fragile = availableProducts.stream().anyMatch(WarehouseProduct::getFragile);
+
+        return BookedProductsDto.builder()
+                .deliveryWeight(deliveryWeight)
+                .deliveryVolume(deliveryVolume)
+                .fragile(fragile)
+                .build();
     }
 }

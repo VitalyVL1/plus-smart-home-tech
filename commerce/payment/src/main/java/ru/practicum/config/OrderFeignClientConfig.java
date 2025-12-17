@@ -22,7 +22,7 @@ public class OrderFeignClientConfig {
      * @return декодер ошибок
      */
     @Bean
-    public ErrorDecoder errorDecoder() {
+    public ErrorDecoder orderErrorDecoder() {
         return new OrderErrorDecoder();
     }
 }

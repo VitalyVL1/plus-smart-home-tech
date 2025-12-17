@@ -40,13 +40,6 @@ public interface WarehouseService {
      */
     AddressDto getAddress();
 
-    /**
-     * Бронирует товары из корзины (тренировочный метод).
-     *
-     * @param shoppingCart корзина с товарами для бронирования
-     */
-    void bookProducts(ShoppingCartDto shoppingCart);
-
     void shippedToDelivery(ShippedToDeliveryRequest request);
 
     void returnToWarehouse(Map<UUID, Long> products);

@@ -1,12 +1,12 @@
 spring:
   cloud:
     gateway:
-      # Глобальные настройки Retry
+      # Глобальные настройки Retry (новый формат)
       default-filters:
         - name: Retry
           args:
             retries: 3
-            statuses: BAD_GATEWAY,SERVICE_UNAVAILABLE,NOT_FOUND
+            series: SERVER_ERROR, NOT_FOUND
             methods: GET,HEAD
             exceptions: java.io.IOException, java.util.concurrent.TimeoutException
             backoff:
@@ -14,61 +14,69 @@ spring:
               maxBackoff: 100ms
               factor: 2
               basedOnPreviousValue: false
+
       # Настройки маршрутов
-      routes:
-        - id: shopping_cart_service_route
-          uri: lb://shopping-cart
-          predicates:
-            - Path=/shopping-cart/**
-          filters:
-            - PrefixPath=/api/v1
+      server:
+        webflux:
+          routes:
+            - id: shopping_cart_service_route
+              uri: lb://shopping-cart
+              predicates:
+                - Path=/shopping-cart/**
+              filters:
+                - PrefixPath=/api/v1
 
-        - id: shopping_store_service_route
-          uri: lb://shopping-store
-          predicates:
-            - Path=/shopping-store/**
-          filters:
-            - PrefixPath=/api/v1
+            - id: shopping_store_service_route
+              uri: lb://shopping-store
+              predicates:
+                - Path=/shopping-store/**
+              filters:
+                - PrefixPath=/api/v1
 
-        - id: warehouse_service_route
-          uri: lb://warehouse
-          predicates:
-            - Path=/warehouse/**
-          filters:
-            - PrefixPath=/api/v1
+            - id: warehouse_service_route
+              uri: lb://warehouse
+              predicates:
+                - Path=/warehouse/**
+              filters:
+                - PrefixPath=/api/v1
 
-        - id: order_service_route
-          uri: lb://order
-          predicates:
-            - Path=/order/**
-          filters:
-            - PrefixPath=/api/v1
+            - id: order_service_route
+              uri: lb://order
+              predicates:
+                - Path=/order/**
+              filters:
+                - PrefixPath=/api/v1
 
-        - id: delivery_service_route
-          uri: lb://delivery
-          predicates:
-            - Path=/delivery/**
-          filters:
-            - PrefixPath=/api/v1
+            - id: delivery_service_route
+              uri: lb://delivery
+              predicates:
+                - Path=/delivery/**
+              filters:
+                - PrefixPath=/api/v1
 
-        - id: payment_service_route
-          uri: lb://payment
-          predicates:
-            - Path=/payment/**
-          filters:
-            - PrefixPath=/api/v1
+            - id: payment_service_route
+              uri: lb://payment
+              predicates:
+                - Path=/payment/**
+              filters:
+                - PrefixPath=/api/v1
+
 
 management:
-  endpoint:
-    gateway:
-      enabled: true   # Включение специальных endpoints для Gateway
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,configprops,loggers,gateway # Список эндпоинтов Actuator для экспозиции через веб
-    health:
-      show-details: always
+        include: health,info,gateway,metrics,configprops
+    endpoint:
+      gateway:
+        access: read_only  # Ключ изменен с 'enabled' на 'access'
+      health:
+        show-details: always
 
 logging:
   level:
-    org.springframework.cloud.gateway: DEBUG    # Детальное логирование Gateway
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.boot.context.config: INFO
+
+# Для отладки
+debug: true

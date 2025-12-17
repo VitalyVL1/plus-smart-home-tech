@@ -15,21 +15,21 @@ public interface OrderService {
 
     OrderDto returnOrder(ProductReturnRequest request);
 
-    OrderDto payOrder(UUID productId);
+    OrderDto paymentSuccess(UUID orderId);
 
-    OrderDto paymentFailed(UUID productId);
+    OrderDto paymentFailed(UUID orderId);
 
-    OrderDto deliveryOrder(UUID productId);
+    OrderDto deliveryOrder(UUID orderId);
 
-    OrderDto deliveryFailed(UUID productId);
+    OrderDto deliveryFailed(UUID orderId);
 
-    OrderDto completedOrder(UUID productId);
+    OrderDto completedOrder(UUID orderId);
 
-    OrderDto calculateTotal(UUID productId);
+    OrderDto calculateTotal(UUID orderId);
 
-    OrderDto calculateDelivery(UUID productId);
+    OrderDto calculateDelivery(UUID orderId);
 
-    OrderDto assemblyOrder(UUID productId);
+    OrderDto assemblyOrder(UUID orderId);
 
-    OrderDto assemblyFailed(UUID productId);
+    OrderDto assemblyFailed(UUID orderId);
 }

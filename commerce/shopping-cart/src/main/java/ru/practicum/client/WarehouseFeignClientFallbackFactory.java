@@ -4,13 +4,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.openfeign.FallbackFactory;
 import org.springframework.stereotype.Component;
 import ru.practicum.dto.cart.ShoppingCartDto;
-import ru.practicum.dto.warehouse.AddProductToWarehouseRequest;
-import ru.practicum.dto.warehouse.AddressDto;
-import ru.practicum.dto.warehouse.BookedProductsDto;
-import ru.practicum.dto.warehouse.NewProductInWarehouseRequest;
+import ru.practicum.dto.warehouse.*;
 import ru.practicum.exception.BadRequestException;
 import ru.practicum.exception.ResourceNotFoundException;
 import ru.practicum.exception.ServiceTemporaryUnavailableException;
+
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * Фабрика fallback для Feign клиента склада.
@@ -43,6 +43,22 @@ public class WarehouseFeignClientFallbackFactory implements FallbackFactory<Ware
 
             @Override
             public AddressDto getWarehouseAddress() {
+                fastFallBack(cause);
+                return null;
+            }
+
+            @Override
+            public void shippedToDelivery(ShippedToDeliveryRequest request) {
+                fastFallBack(cause);
+            }
+
+            @Override
+            public void returnToWarehouse(Map<UUID, Long> products) {
+                fastFallBack(cause);
+            }
+
+            @Override
+            public BookedProductsDto assemblyProductForOrderFromShoppingCart(AssemblyProductsForOrderRequest request) {
                 fastFallBack(cause);
                 return null;
             }

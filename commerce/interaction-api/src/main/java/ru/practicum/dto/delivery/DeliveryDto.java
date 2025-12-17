@@ -16,8 +16,10 @@ public record DeliveryDto(
         UUID orderId,
         @NotNull
         DeliveryState deliveryState) {
-    @Builder
+    @Builder(toBuilder = true)
     public DeliveryDto {
+        if (deliveryState == null) {
+            deliveryState = DeliveryState.CREATED;
+        }
     }
-
 }

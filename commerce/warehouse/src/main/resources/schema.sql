@@ -42,8 +42,9 @@ CREATE TABLE IF NOT EXISTS warehouse_products
 
 CREATE TABLE IF NOT EXISTS booked_products
 (
-    order_id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    shopping_cart_id     UUID                                                      NOT NULL,
+    booked_product_id    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    order_id             UUID                                                      NOT NULL,
+    delivery_id          UUID,
     warehouse_product_id UUID REFERENCES warehouse_products (warehouse_product_id) NOT NULL,
     quantity             INTEGER                                                   NOT NULL CHECK (quantity >= 0),
     booked_at            TIMESTAMP        DEFAULT CURRENT_TIMESTAMP
@@ -64,10 +65,6 @@ CREATE INDEX IF NOT EXISTS idx_warehouse_products_warehouse_product
 -- Для поиска всех товаров на складе
 CREATE INDEX IF NOT EXISTS idx_warehouse_products_warehouse
     ON warehouse_products (warehouse_id);
-
--- Для бронирований
-CREATE INDEX IF NOT EXISTS idx_booked_products_cart
-    ON booked_products (shopping_cart_id);
 
 -- Для поиска бронирований по товару (через warehouse_products)
 CREATE INDEX IF NOT EXISTS idx_booked_products_warehouse_product

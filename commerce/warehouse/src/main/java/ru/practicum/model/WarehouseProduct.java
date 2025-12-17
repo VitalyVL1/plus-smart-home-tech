@@ -8,8 +8,6 @@ import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.UuidGenerator;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -66,6 +64,7 @@ public class WarehouseProduct {
      */
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "dimensions_id", nullable = false)
+    @ToString.Exclude
     private Dimension dimensions;
 
     /**
@@ -87,12 +86,4 @@ public class WarehouseProduct {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private Instant updatedAt;
-
-    /**
-     * Бронирования этого товара.
-     */
-    @OneToMany(mappedBy = "warehouseProduct", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    @ToString.Exclude
-    private List<BookedProduct> bookings = new ArrayList<>();
 }

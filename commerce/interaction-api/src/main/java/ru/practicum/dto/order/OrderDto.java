@@ -22,8 +22,6 @@ public record OrderDto(
         BigDecimal totalPrice,
         BigDecimal deliveryPrice,
         BigDecimal productPrice
-
-
 ) {
     @Builder
     public OrderDto {

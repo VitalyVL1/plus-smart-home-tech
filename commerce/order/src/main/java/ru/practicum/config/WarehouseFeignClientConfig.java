@@ -23,7 +23,7 @@ public class WarehouseFeignClientConfig {
      * @return декодер ошибок
      */
     @Bean
-    public ErrorDecoder errorDecoder() {
+    public ErrorDecoder warehouseErrorDecoder() {
         return new WarehouseErrorDecoder();
     }
 }

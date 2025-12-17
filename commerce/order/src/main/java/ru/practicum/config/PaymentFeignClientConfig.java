@@ -22,7 +22,7 @@ public class PaymentFeignClientConfig {
      * @return декодер ошибок
      */
     @Bean
-    public ErrorDecoder errorDecoder() {
+    public ErrorDecoder paymentErrorDecoder() {
         return new PaymentErrorDecoder();
     }
 }

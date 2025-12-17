@@ -1,7 +1,6 @@
 package ru.practicum.client;
 
 import jakarta.validation.Valid;
-import org.springframework.cloud.openfeign.SpringQueryMap;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -27,32 +26,32 @@ public interface OrderClient {
     OrderDto createOrder(@RequestBody @Valid CreateNewOrderRequest request);
 
     @PostMapping("/return")
-    OrderDto returnOrder(@Valid @SpringQueryMap ProductReturnRequest request);
+    OrderDto returnOrder(@RequestBody @Valid ProductReturnRequest request);
 
     @PostMapping("/payment")
-    OrderDto paymentSuccess(@RequestBody UUID productId);
+    OrderDto paymentSuccess(@RequestBody UUID orderId);
 
     @PostMapping("/payment/failed")
-    OrderDto paymentFailed(@RequestBody UUID productId);
+    OrderDto paymentFailed(@RequestBody UUID orderId);
 
     @PostMapping("/delivery")
-    OrderDto delivery(@RequestBody UUID productId);
+    OrderDto delivery(@RequestBody UUID orderId);
 
     @PostMapping("/delivery/failed")
-    OrderDto deliveryFailed(@RequestBody UUID productId);
+    OrderDto deliveryFailed(@RequestBody UUID orderId);
 
     @PostMapping("/completed")
-    OrderDto completedOrder(@RequestBody UUID productId);
+    OrderDto completedOrder(@RequestBody UUID orderId);
 
     @PostMapping("/calculate/total")
-    OrderDto calculateTotal(@RequestBody UUID productId);
+    OrderDto calculateTotal(@RequestBody UUID orderId);
 
     @PostMapping("/calculate/delivery")
-    OrderDto calculateDelivery(@RequestBody UUID productId);
+    OrderDto calculateDelivery(@RequestBody UUID orderId);
 
     @PostMapping("/assembly")
-    OrderDto assemblyOrder(@RequestBody UUID productId);
+    OrderDto assemblyOrder(@RequestBody UUID orderId);
 
     @PostMapping("/assembly/failed")
-    OrderDto assemblyFailed(@RequestBody UUID productId);
+    OrderDto assemblyFailed(@RequestBody UUID orderId);
 }

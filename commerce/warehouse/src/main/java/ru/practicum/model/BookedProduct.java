@@ -22,20 +22,25 @@ import java.util.UUID;
 @AllArgsConstructor
 @DynamicUpdate
 public class BookedProduct {
+    /**
+     * Уникальный идентификатор забронированного товара.
+     */
+    @Id
+    @UuidGenerator
+    @Column(name = "booked_product_id", updatable = false, nullable = false)
+    private UUID id;
 
     /**
      * Уникальный идентификатор заказа.
      */
-    @Id
-    @UuidGenerator
-    @Column(name = "order_id")
+    @Column(name = "order_id", nullable = false)
     private UUID orderId;
 
     /**
-     * ID корзины покупок.
+     * Уникальный идентификатор доставки.
      */
-    @Column(name = "shopping_cart_id", nullable = false)
-    private UUID shoppingCartId;
+    @Column(name = "delivery_id")
+    private UUID deliveryId;
 
     /**
      * Забронированный товар на складе.
