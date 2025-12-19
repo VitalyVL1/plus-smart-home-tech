@@ -5,12 +5,11 @@ import org.springframework.cloud.openfeign.FallbackFactory;
 import org.springframework.stereotype.Component;
 import ru.practicum.dto.cart.ShoppingCartDto;
 import ru.practicum.dto.warehouse.*;
-import ru.practicum.exception.BadRequestException;
-import ru.practicum.exception.ResourceNotFoundException;
-import ru.practicum.exception.ServiceTemporaryUnavailableException;
 
 import java.util.Map;
 import java.util.UUID;
+
+import static ru.practicum.exception.FallBackUtility.fastFallBack;
 
 /**
  * Фабрика fallback для Feign клиента склада.
@@ -48,6 +47,11 @@ public class WarehouseFeignClientFallbackFactory implements FallbackFactory<Ware
             }
 
             @Override
+            public void cancelAssemblyProductForOrder(UUID orderId) {
+                fastFallBack(cause);
+            }
+
+            @Override
             public void shippedToDelivery(ShippedToDeliveryRequest request) {
                 fastFallBack(cause);
             }
@@ -61,21 +65,6 @@ public class WarehouseFeignClientFallbackFactory implements FallbackFactory<Ware
             public BookedProductsDto assemblyProductForOrderFromShoppingCart(AssemblyProductsForOrderRequest request) {
                 fastFallBack(cause);
                 return null;
-            }
-
-            private void fastFallBack(Throwable cause) {
-                if (cause instanceof ResourceNotFoundException) {
-                    log.warn("Not found (404): ", cause);
-                    throw (ResourceNotFoundException) cause;
-                }
-
-                if (cause instanceof BadRequestException) {
-                    log.warn("Bad request (4xx): ", cause);
-                    throw (BadRequestException) cause;
-                }
-
-                log.error("Server/network error ", cause);
-                throw new ServiceTemporaryUnavailableException("Service is temporarily unavailable");
             }
         };
     }

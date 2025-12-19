@@ -9,4 +9,7 @@ import ru.practicum.exception.BaseErrorDecoder;
  * возникающих при вызове API заказов через Feign.
  */
 public class OrderErrorDecoder extends BaseErrorDecoder {
+    public OrderErrorDecoder() {
+        super("order");
+    }
 }

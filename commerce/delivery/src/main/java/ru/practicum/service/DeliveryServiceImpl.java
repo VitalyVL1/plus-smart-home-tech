@@ -1,5 +1,6 @@
 package ru.practicum.service;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -124,6 +125,20 @@ public class DeliveryServiceImpl implements DeliveryService {
         }
 
         return cost.setScale(2, RoundingMode.HALF_UP);
+    }
+
+    @Override
+    @Transactional
+    public void cancelDelivery(UUID deliveryId) {
+        Delivery delivery = deliveryRepository.findByDeliveryId(deliveryId)
+                .orElseThrow(() ->
+                        new NoDeliveryFoundException("Delivery for deliveryId = " + deliveryId + " not found"));
+
+        if(delivery.getDeliveryState().equals(DeliveryState.CANCELLED)){
+            log.info("Delivery for deliveryId = " + deliveryId + " is already cancelled");
+        }
+
+        delivery.setDeliveryState(DeliveryState.CANCELLED);
     }
 
     private Delivery getDelivery(UUID orderId) {

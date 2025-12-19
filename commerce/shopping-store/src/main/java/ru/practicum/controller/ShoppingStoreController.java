@@ -22,6 +22,8 @@ import java.util.UUID;
 /**
  * Контроллер для управления товарами магазина.
  */
+
+//TODO: добавить кэширование
 @LogAllMethods
 @RestController
 @RequestMapping("/api/v1/shopping-store")

@@ -51,21 +51,35 @@ public class OrderServiceImpl implements OrderService {
         return orderMapper.toDto(orderRepository.findByUsername(username, pageable));
     }
 
-    //TODO: для корректной реализации патерна SAGA необходимы также методы для отката бронирования товаров
     @Override
     @Transactional
     public OrderDto createOrder(CreateNewOrderRequest request) {
         // 1. Создание заказа и бронирование товаров на складе
         Order order = createOrderEntity(request);
 
-        // 2. Планирование доставки
-        planDelivery(order, request.deliveryAddress());
+        try {
+            // 2. Планирование доставки
+            planDelivery(order, request.deliveryAddress());
 
-        // 3. Расчет стоимости
-        calculateAndSetPrices(order);
+            // 3. Расчет стоимости
+            calculateAndSetPrices(order);
 
-        // 4. Создание платежа
-        createPayment(order);
+            // 4. Создание платежа
+            createPayment(order);
+        } catch (Exception e) {
+            //отменяем бронирование товаров и доставку,
+            //т.к. платеж не создастся без всех предыдущих этапов, то откат платежа не нужен
+            if (order.getDeliveryId() != null) {
+                deliveryClient.cancelDelivery(order.getDeliveryId());
+            }
+            if (order.getOrderId() != null) {
+                warehouseClient.cancelAssemblyProductForOrder(order.getOrderId());
+            }
+
+            //пробрасываем исключение дальше,
+            //что бы не создавался заказ и была видна причина почему это произошло.
+            throw e;
+        }
 
         return orderMapper.toDto(order);
     }
@@ -73,10 +87,10 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public OrderDto returnOrder(ProductReturnRequest request) {
-        Order order = getOrder(request.getOrderId());
+        Order order = getOrder(request.orderId());
 
         if (order.getState() != OrderState.PRODUCT_RETURNED) {
-            warehouseClient.returnToWarehouse(request.getProducts());
+            warehouseClient.returnToWarehouse(request.products());
         }
 
         order.setState(OrderState.PRODUCT_RETURNED);

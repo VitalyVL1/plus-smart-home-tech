@@ -25,4 +25,7 @@ public interface DeliveryClient {
 
     @PostMapping("/cost")
     BigDecimal deliveryCost(@RequestBody @Valid OrderDto orderDto);
+
+    @PostMapping("/cancel")
+    void cancelDelivery(@RequestBody UUID deliveryId);
 }

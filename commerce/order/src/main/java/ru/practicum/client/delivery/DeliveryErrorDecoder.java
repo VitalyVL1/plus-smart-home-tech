@@ -9,4 +9,7 @@ import ru.practicum.exception.BaseErrorDecoder;
  * возникающих при вызове API доставки через Feign.
  */
 public class DeliveryErrorDecoder extends BaseErrorDecoder {
+    public DeliveryErrorDecoder() {
+        super("delivery");
+    }
 }

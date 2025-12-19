@@ -9,4 +9,7 @@ import ru.practicum.exception.BaseErrorDecoder;
  * возникающих при вызове API склада через Feign.
  */
 public class WarehouseErrorDecoder extends BaseErrorDecoder {
+    public WarehouseErrorDecoder() {
+        super("warehouse");
+    }
 }

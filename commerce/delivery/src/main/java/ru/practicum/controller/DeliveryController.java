@@ -56,4 +56,11 @@ public class DeliveryController implements DeliveryClient {
     public BigDecimal deliveryCost(@RequestBody @Valid OrderDto orderDto) {
         return deliveryService.deliveryCost(orderDto);
     }
+
+    @Override
+    @PostMapping("/cancel")
+    @ResponseStatus(HttpStatus.OK)
+    public void cancelDelivery(UUID deliveryId) {
+        deliveryService.cancelDelivery(deliveryId);
+    }
 }

@@ -16,4 +16,6 @@ public interface DeliveryService {
     void failedDelivery(UUID orderId);
 
     BigDecimal deliveryCost(OrderDto orderDto);
+
+    void cancelDelivery(UUID deliveryId);
 }

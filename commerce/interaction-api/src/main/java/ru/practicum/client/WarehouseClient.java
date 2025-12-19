@@ -60,4 +60,7 @@ public interface WarehouseClient {
             @RequestBody @Valid
             AssemblyProductsForOrderRequest request);
 
+    @PostMapping("/assembly/cancel")
+    void cancelAssemblyProductForOrder(@RequestBody UUID orderId);
+
 }

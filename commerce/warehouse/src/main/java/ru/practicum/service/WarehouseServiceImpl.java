@@ -20,10 +20,7 @@ import ru.practicum.repository.BookedProductRepository;
 import ru.practicum.repository.WarehouseProductRepository;
 import ru.practicum.repository.WarehouseRepository;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -167,6 +164,37 @@ public class WarehouseServiceImpl implements WarehouseService {
         productsToReturn.forEach(product ->
                 product.setQuantity(product.getQuantity() + products.get(product.getProductId())));
         productsToReturn.forEach(this::updateQuantityState);
+    }
+
+    // Отменяем бронирование сбрасывая количество забронированного товара
+    // и возвращаем на склад
+    @Override
+    @Transactional
+    public void cancelAssemblyProductForOrder(UUID orderId) {
+        List<BookedProduct> bookedProducts = bookedProductRepository.findAllByOrderId(orderId);
+
+        if (bookedProducts.isEmpty()) {
+            return;
+        }
+
+        // Собираем обновления в списки
+        List<WarehouseProduct> warehouseProductsToUpdate = new ArrayList<>();
+
+        for (BookedProduct bookedProduct : bookedProducts) {
+            WarehouseProduct warehouseProduct = bookedProduct.getWarehouseProduct();
+            warehouseProduct.setQuantity(warehouseProduct.getQuantity() + bookedProduct.getQuantity());
+            warehouseProductsToUpdate.add(warehouseProduct);
+        }
+
+        // Пакетное сохранение
+        warehouseProductRepository.saveAll(warehouseProductsToUpdate);
+
+        // обнуляем количество забронированного товара в заказе
+        int canceledBooking = bookedProductRepository.updateQuantity(orderId, 0L);
+        log.info("Canceled booking for {} booked products", canceledBooking);
+
+        // Обновляем количество товаров для отображения в магазине
+        warehouseProductsToUpdate.forEach(this::updateQuantityState);
     }
 
     private Warehouse getRandomWarehouse() {

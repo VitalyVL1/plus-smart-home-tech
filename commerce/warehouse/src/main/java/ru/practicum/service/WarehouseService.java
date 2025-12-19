@@ -46,4 +46,5 @@ public interface WarehouseService {
 
     BookedProductsDto assemblyProductForOrder(AssemblyProductsForOrderRequest request);
 
+    void cancelAssemblyProductForOrder(UUID orderId);
 }

@@ -10,6 +10,8 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy;
 /**
  * Главный класс приложения магазина товаров.
  */
+
+//TODO: включить кэширование после настройки
 @SpringBootApplication
 @EnableFeignClients
 @EnableDiscoveryClient

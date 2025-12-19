@@ -8,11 +8,10 @@ import org.springframework.stereotype.Component;
 import ru.practicum.dto.order.CreateNewOrderRequest;
 import ru.practicum.dto.order.OrderDto;
 import ru.practicum.dto.order.ProductReturnRequest;
-import ru.practicum.exception.BadRequestException;
-import ru.practicum.exception.ResourceNotFoundException;
-import ru.practicum.exception.ServiceTemporaryUnavailableException;
 
 import java.util.UUID;
+
+import static ru.practicum.exception.FallBackUtility.fastFallBack;
 
 /**
  * Фабрика fallback для Feign клиента доставки.
@@ -96,21 +95,6 @@ public class OrderFeignClientFallbackFactory implements FallbackFactory<OrderFei
             public OrderDto assemblyFailed(UUID productId) {
                 fastFallBack(cause);
                 return null;
-            }
-
-            private void fastFallBack(Throwable cause) {
-                if (cause instanceof ResourceNotFoundException) {
-                    log.warn("Not found (404): ", cause);
-                    throw (ResourceNotFoundException) cause;
-                }
-
-                if (cause instanceof BadRequestException) {
-                    log.warn("Bad request (4xx): ", cause);
-                    throw (BadRequestException) cause;
-                }
-
-                log.error("Server/network error ", cause);
-                throw new ServiceTemporaryUnavailableException("Service is temporarily unavailable");
             }
         };
     }

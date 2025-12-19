@@ -8,6 +8,7 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 /**
  * Главный класс сервиса gateway.
  */
+//TODO: добавить SpringSecurity, что бы попробовать его в деле
 @SpringBootApplication
 @EnableDiscoveryClient
 @Slf4j

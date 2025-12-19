@@ -9,4 +9,7 @@ import ru.practicum.exception.BaseErrorDecoder;
  * возникающих при вызове API оплаты через Feign.
  */
 public class PaymentErrorDecoder extends BaseErrorDecoder {
+    public PaymentErrorDecoder() {
+        super("payment");
+    }
 }

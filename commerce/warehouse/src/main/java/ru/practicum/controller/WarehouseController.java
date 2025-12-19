@@ -74,4 +74,11 @@ public class WarehouseController implements WarehouseClient {
             AssemblyProductsForOrderRequest request) {
         return warehouseService.assemblyProductForOrder(request);
     }
+
+    @Override
+    @PostMapping("/assembly/cancel")
+    @ResponseStatus(HttpStatus.OK)
+    public void cancelAssemblyProductForOrder(UUID orderId) {
+        warehouseService.cancelAssemblyProductForOrder(orderId);
+    }
 }
