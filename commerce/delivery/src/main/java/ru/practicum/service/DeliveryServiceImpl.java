@@ -134,7 +134,7 @@ public class DeliveryServiceImpl implements DeliveryService {
                 .orElseThrow(() ->
                         new NoDeliveryFoundException("Delivery for deliveryId = " + deliveryId + " not found"));
 
-        if(delivery.getDeliveryState().equals(DeliveryState.CANCELLED)){
+        if (delivery.getDeliveryState().equals(DeliveryState.CANCELLED)) {
             log.info("Delivery for deliveryId = " + deliveryId + " is already cancelled");
         }
 
