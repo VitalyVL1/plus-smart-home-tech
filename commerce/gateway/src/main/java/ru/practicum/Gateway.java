@@ -3,14 +3,15 @@ package ru.practicum;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 
 /**
  * Главный класс сервиса gateway.
  */
-//TODO: добавить SpringSecurity, что бы попробовать его в деле
 @SpringBootApplication
 @EnableDiscoveryClient
+@ConfigurationPropertiesScan
 @Slf4j
 public class Gateway {
     /**

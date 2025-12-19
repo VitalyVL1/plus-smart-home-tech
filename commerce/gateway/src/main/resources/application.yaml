@@ -1,7 +1,15 @@
 server:
   port: 8080 # Порт, на котором будет работать сервис (0-выбирается случайным образом)
 
+gateway:
+  username: gateway # Имя пользователя для аутентификации в сервисе
+  password: gateway # Пароль пользователя для аутентификации в сервисе
+  roles: gateway # Роль пользователя для аутентификации в сервисе
+
 spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.security.reactive.ReactiveUserDetailsServiceAutoConfiguration # Исключаем автоконфигурацию для ReactiveUserDetailsService
   application:
     name: gateway # Имя текущего микросервиса, используется для идентификации в Eureka и Config Server
   profiles:

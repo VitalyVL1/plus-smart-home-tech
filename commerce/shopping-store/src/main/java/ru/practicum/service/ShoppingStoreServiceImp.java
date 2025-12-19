@@ -2,6 +2,8 @@ package ru.practicum.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -28,6 +30,7 @@ public class ShoppingStoreServiceImp implements ShoppingStoreService {
     private final ProductMapper productMapper;
 
     @Transactional
+    @CacheEvict(cacheNames = "products", allEntries = true)
     @Override
     public ProductDto createProduct(ProductDto product) {
         Product productEntity = shoppingStoreRepository.save(productMapper.toEntity(product));
@@ -35,6 +38,7 @@ public class ShoppingStoreServiceImp implements ShoppingStoreService {
     }
 
     @Transactional
+    @CacheEvict(cacheNames = "products", allEntries = true)
     @Override
     public ProductDto updateProduct(ProductDto product) {
         Product productToUpdate = getProduct(product.productId());
@@ -43,6 +47,7 @@ public class ShoppingStoreServiceImp implements ShoppingStoreService {
     }
 
     @Transactional
+    @CacheEvict(cacheNames = "products", allEntries = true)
     @Override
     public Boolean removeProduct(UUID productId) {
         Product productToRemove = getProduct(productId);
@@ -56,6 +61,7 @@ public class ShoppingStoreServiceImp implements ShoppingStoreService {
     }
 
     @Transactional
+    @CacheEvict(cacheNames = "products", allEntries = true)
     @Override
     public Boolean setQuantityState(SetProductQuantityStateRequest request) {
         Product productToSetQuantityState = getProduct(request.getProductId());
@@ -68,11 +74,13 @@ public class ShoppingStoreServiceImp implements ShoppingStoreService {
         }
     }
 
+    @Cacheable(cacheNames = "products")
     @Override
     public Page<ProductDto> getProductsByCategory(ProductCategory category, Pageable pageable) {
         return productMapper.toDto(shoppingStoreRepository.findAllByProductCategory(category, pageable));
     }
 
+    @Cacheable(cacheNames = "products")
     @Override
     public ProductDto getProductById(UUID productId) {
         return productMapper.toDto(getProduct(productId));
