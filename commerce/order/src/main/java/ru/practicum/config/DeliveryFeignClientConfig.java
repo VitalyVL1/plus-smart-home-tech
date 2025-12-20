@@ -1,8 +1,10 @@
 package ru.practicum.config;
 
+import feign.RequestInterceptor;
+import feign.auth.BasicAuthRequestInterceptor;
 import feign.codec.ErrorDecoder;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import ru.practicum.client.delivery.DeliveryErrorDecoder;
 
 /**
@@ -10,17 +12,27 @@ import ru.practicum.client.delivery.DeliveryErrorDecoder;
  * <p>
  * Настраивает компоненты, специфичные для взаимодействия
  * с микросервисом доставки через Feign.
+ * <p>
+ * Предоставляет бины для:
+ * <ul>
+ *   <li>Аутентификации через Basic Auth (учетные данные загружаются из конфигурации)</li>
+ *   <li>Кастомной обработки ошибок от сервиса доставки</li>
+ * </ul>
+ *
+ * @see DeliveryErrorDecoder
+ * @see BasicAuthRequestInterceptor
  */
-@Configuration
 public class DeliveryFeignClientConfig {
-    /**
-     * Создает декодер ошибок для Feign клиента оплаты.
-     * <p>
-     * Декодер обрабатывает HTTP ответы от сервиса оплаты
-     * и преобразует их в соответствующие исключения.
-     *
-     * @return декодер ошибок
-     */
+    @Value("${feign.clients.delivery.username}")
+    private String username;
+    @Value("${feign.clients.delivery.password}")
+    private String password;
+
+    @Bean
+    public RequestInterceptor deliveryAuthInterceptor() {
+        return new BasicAuthRequestInterceptor(username, password);
+    }
+
     @Bean
     public ErrorDecoder deliveryErrorDecoder() {
         return new DeliveryErrorDecoder();

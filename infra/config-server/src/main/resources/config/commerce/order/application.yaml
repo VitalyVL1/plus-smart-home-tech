@@ -1,3 +1,25 @@
+feign:
+  clients:
+    delivery:
+      username: delivery
+      password: delivery
+    payment:
+      username: payment
+      password: payment
+    warehouse:
+      username: warehouse
+      password: warehouse
+
+app:
+  security:
+    users:
+      order:
+        password: order
+        roles: SERVICE
+      gateway:
+        password: gateway
+        roles: GATEWAY
+
 spring:
   jpa:
     hibernate.ddl-auto: none                     # Отключить автоматическое создание и обновление таблиц Hibernate

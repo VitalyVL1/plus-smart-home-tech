@@ -29,7 +29,7 @@ public class DeliveryServiceImpl implements DeliveryService {
     private final OrderClient orderClient;
     private final WarehouseClient warehouseClient;
     private final TransactionTemplate transactionTemplate;
-    private static final BigDecimal BASE_DELIVETY_RATE = BigDecimal.valueOf(5);
+    private static final BigDecimal BASE_DELIVERY_RATE = BigDecimal.valueOf(5);
 
     @Override
     public DeliveryDto planDelivery(DeliveryDto deliveryDto) {
@@ -96,7 +96,7 @@ public class DeliveryServiceImpl implements DeliveryService {
         String fromStreet = delivery.getFromAddress().getStreet();
         String toStreet = delivery.getToAddress().getStreet();
 
-        BigDecimal cost = BASE_DELIVETY_RATE;
+        BigDecimal cost = BASE_DELIVERY_RATE;
 
         // 1. Проверяем адрес склада, если адрес склада ADDRESS_2,
         // то базовую стоимость умножаем на 2 и прибавляем базовую стоимость
