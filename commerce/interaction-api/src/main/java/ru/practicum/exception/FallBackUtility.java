@@ -15,8 +15,8 @@ public class FallBackUtility {
      * Анализирует причину сбоя, логирует её и преобразует в соответствующее бизнес-исключение.
      *
      * @param cause исключение, вызвавшее сбой
-     * @throws ResourceNotFoundException если ресурс не найден (404)
-     * @throws BadRequestException если некорректный запрос (4xx)
+     * @throws ResourceNotFoundException            если ресурс не найден (404)
+     * @throws BadRequestException                  если некорректный запрос (4xx)
      * @throws ServiceTemporaryUnavailableException для всех остальных ошибок (5xx/network)
      */
     public static void fastFallBack(Throwable cause) {

@@ -27,7 +27,7 @@ public interface BookedProductRepository extends JpaRepository<BookedProduct, UU
      * Обновляет количество забронированных товаров для заказа.
      * Выполняет массовое обновление в базе данных.
      *
-     * @param orderId идентификатор заказа
+     * @param orderId     идентификатор заказа
      * @param newQuantity новое количество товаров
      * @return количество обновленных записей
      */

@@ -313,7 +313,7 @@ public class WarehouseServiceImpl implements WarehouseService {
      * Определяет характеристики забронированных товаров для доставки.
      *
      * @param availableProducts доступные товары на складе
-     * @param assemblyProducts товары для сборки (ID → количество)
+     * @param assemblyProducts  товары для сборки (ID → количество)
      * @return характеристики забронированных товаров
      */
     private BookedProductsDto determineBookedProducts(

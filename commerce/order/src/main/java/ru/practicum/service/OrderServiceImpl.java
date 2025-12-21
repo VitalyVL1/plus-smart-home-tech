@@ -251,10 +251,10 @@ public class OrderServiceImpl implements OrderService {
      * Выполняется в транзакции.
      *
      * @param orderId идентификатор заказа
-     * @param state новый статус
+     * @param state   новый статус
      * @return обновленный заказ
      * @throws IllegalArgumentException если orderId или state равны null
-     * @throws NoOrderFoundException если заказ не найден
+     * @throws NoOrderFoundException    если заказ не найден
      */
     private OrderDto setOrderState(UUID orderId, OrderState state) {
         if (orderId == null || state == null) {
@@ -321,7 +321,7 @@ public class OrderServiceImpl implements OrderService {
     /**
      * Планирует доставку для заказа.
      *
-     * @param order заказ
+     * @param order           заказ
      * @param deliveryAddress адрес доставки
      */
     private void planDelivery(Order order, AddressDto deliveryAddress) {

@@ -102,10 +102,10 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
      * Удаляет товары из корзины пользователя.
      *
      * @param username имя пользователя
-     * @param items список идентификаторов товаров для удаления
+     * @param items    список идентификаторов товаров для удаления
      * @return обновленная корзина покупок
-     * @throws IllegalArgumentException если список товаров пустой
-     * @throws NotAuthorizedUserException если username равен null или пустой
+     * @throws IllegalArgumentException          если список товаров пустой
+     * @throws NotAuthorizedUserException        если username равен null или пустой
      * @throws NoProductsInShoppingCartException если корзина не найдена или товаров нет в корзине
      */
     @Transactional
@@ -139,9 +139,9 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
      * Проверяет доступность нового количества на складе.
      *
      * @param username имя пользователя
-     * @param request запрос на изменение количества
+     * @param request  запрос на изменение количества
      * @return обновленная корзина покупок
-     * @throws NotAuthorizedUserException если username равен null или пустой
+     * @throws NotAuthorizedUserException        если username равен null или пустой
      * @throws NoProductsInShoppingCartException если корзина или товар не найдены
      */
     @Transactional
