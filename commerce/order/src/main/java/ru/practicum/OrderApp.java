@@ -7,6 +7,18 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 
+/**
+ * Главный класс приложения службы заказов.
+ * Запускает Spring Boot приложение с поддержкой микросервисной архитектуры.
+ *
+ * <p>Конфигурация включает:</p>
+ * <ul>
+ *   <li>Spring Boot автоконфигурацию</li>
+ *   <li>Feign клиенты для взаимодействия с другими сервисами</li>
+ *   <li>Service Discovery для регистрации в Eureka/Consul</li>
+ *   <li>AspectJ для AOP (логирование, метрики)</li>
+ * </ul>
+ */
 @SpringBootApplication
 @EnableFeignClients
 @EnableDiscoveryClient

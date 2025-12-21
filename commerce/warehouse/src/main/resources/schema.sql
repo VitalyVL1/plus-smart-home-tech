@@ -11,9 +11,9 @@ CREATE TABLE IF NOT EXISTS addresses
 CREATE TABLE IF NOT EXISTS dimensions
 (
     dimensions_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    width         INT NOT NULL CHECK (width > 0),
-    height        INT NOT NULL CHECK (height > 0),
-    depth         INT NOT NULL CHECK (depth > 0)
+    width         DOUBLE PRECISION NOT NULL CHECK (width > 0),
+    height        DOUBLE PRECISION NOT NULL CHECK (height > 0),
+    depth         DOUBLE PRECISION NOT NULL CHECK (depth > 0)
 );
 
 CREATE TABLE IF NOT EXISTS warehouses

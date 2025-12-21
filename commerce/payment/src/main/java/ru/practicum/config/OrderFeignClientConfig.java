@@ -23,16 +23,30 @@ import ru.practicum.client.order.OrderErrorDecoder;
  * @see BasicAuthRequestInterceptor
  */
 public class OrderFeignClientConfig {
+
     @Value("${feign.clients.order.username}")
     private String username;
+
     @Value("${feign.clients.order.password}")
     private String password;
 
+    /**
+     * Создает интерцептор для Basic аутентификации.
+     * Добавляет учетные данные к каждому запросу к сервису заказов.
+     *
+     * @return интерцептор с аутентификацией
+     */
     @Bean
     public RequestInterceptor orderAuthInterceptor() {
         return new BasicAuthRequestInterceptor(username, password);
     }
 
+    /**
+     * Создает декодер ошибок для Feign клиента заказов.
+     * Преобразует HTTP-ответы от сервиса заказов в соответствующие исключения.
+     *
+     * @return декодер ошибок
+     */
     @Bean
     public ErrorDecoder orderErrorDecoder() {
         return new OrderErrorDecoder();

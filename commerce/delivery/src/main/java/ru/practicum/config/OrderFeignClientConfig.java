@@ -12,6 +12,15 @@ import ru.practicum.client.order.OrderErrorDecoder;
  * <p>
  * Настраивает компоненты, специфичные для взаимодействия
  * с микросервисом заказов через Feign.
+ * <p>
+ * Предоставляет бины для:
+ * <ul>
+ *   <li>Аутентификации через Basic Auth (учетные данные загружаются из конфигурации)</li>
+ *   <li>Кастомной обработки ошибок от сервиса оплаты</li>
+ * </ul>
+ *
+ * @see OrderErrorDecoder
+ * @see BasicAuthRequestInterceptor
  */
 public class OrderFeignClientConfig {
 
@@ -22,20 +31,24 @@ public class OrderFeignClientConfig {
     private String password;
 
     /**
+     * Создает интерцептор для Basic аутентификации.
+     * Добавляет учетные данные к каждому запросу к сервису заказов.
+     *
+     * @return интерцептор с аутентификацией
+     */
+    @Bean
+    public RequestInterceptor orderAuthInterceptor() {
+        return new BasicAuthRequestInterceptor(username, password);
+    }
+
+    /**
      * Создает декодер ошибок для Feign клиента заказов.
-     * <p>
-     * Декодер обрабатывает HTTP ответы от сервиса заказов
-     * и преобразует их в соответствующие исключения.
+     * Преобразует HTTP-ответы от сервиса заказов в соответствующие исключения.
      *
      * @return декодер ошибок
      */
     @Bean
     public ErrorDecoder orderErrorDecoder() {
         return new OrderErrorDecoder();
-    }
-
-    @Bean
-    public RequestInterceptor orderAuthInterceptor() {
-        return new BasicAuthRequestInterceptor(username, password);
     }
 }

@@ -30,6 +30,11 @@ import ru.practicum.repository.OrderRepository;
 import java.math.BigDecimal;
 import java.util.UUID;
 
+/**
+ * Сервис для управления заказами.
+ * Координирует создание и обработку заказов, взаимодействуя с другими сервисами:
+ * складом, доставкой и платежами.
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -42,6 +47,14 @@ public class OrderServiceImpl implements OrderService {
     private final WarehouseClient warehouseClient;
     private final TransactionTemplate transactionTemplate;
 
+    /**
+     * Получает список заказов пользователя с пагинацией.
+     *
+     * @param username имя пользователя
+     * @param pageable параметры пагинации
+     * @return страница с заказами пользователя
+     * @throws NotAuthorizedUserException если username равен null
+     */
     @Override
     public Page<OrderDto> getOrders(String username, Pageable pageable) {
         if (username == null) {
@@ -51,6 +64,20 @@ public class OrderServiceImpl implements OrderService {
         return orderMapper.toDto(orderRepository.findByUsername(username, pageable));
     }
 
+    /**
+     * Создает новый заказ.
+     * Выполняет последовательность шагов:
+     * <ol>
+     *   <li>Создание заказа и бронирование товаров на складе</li>
+     *   <li>Планирование доставки</li>
+     *   <li>Расчет стоимости доставки и товаров</li>
+     *   <li>Создание платежа</li>
+     * </ol>
+     * В случае ошибки выполняется откат всех выполненных действий.
+     *
+     * @param request данные для создания заказа
+     * @return созданный заказ
+     */
     @Override
     @Transactional
     public OrderDto createOrder(CreateNewOrderRequest request) {
@@ -84,6 +111,13 @@ public class OrderServiceImpl implements OrderService {
         return orderMapper.toDto(order);
     }
 
+    /**
+     * Обрабатывает возврат товаров из заказа.
+     * Возвращает товары на склад и обновляет статус заказа.
+     *
+     * @param request данные для возврата товаров
+     * @return обновленный заказ
+     */
     @Override
     @Transactional
     public OrderDto returnOrder(ProductReturnRequest request) {
@@ -97,36 +131,73 @@ public class OrderServiceImpl implements OrderService {
         return orderMapper.toDto(order);
     }
 
-    // Вызывается из сервиса payment
+    /**
+     * Обрабатывает успешную оплату заказа.
+     * Вызывается из сервиса платежей.
+     *
+     * @param orderId идентификатор заказа
+     * @return обновленный заказ
+     */
     @Override
     public OrderDto paymentSuccess(UUID orderId) {
         return setOrderState(orderId, OrderState.PAID);
     }
 
-    // Вызывается из сервиса payment
+    /**
+     * Обрабатывает неудачную оплату заказа.
+     * Вызывается из сервиса платежей.
+     *
+     * @param orderId идентификатор заказа
+     * @return обновленный заказ
+     */
     @Override
     public OrderDto paymentFailed(UUID orderId) {
         return setOrderState(orderId, OrderState.PAYMENT_FAILED);
     }
 
-    // Вызывается из сервиса delivery
+    /**
+     * Обрабатывает успешную доставку заказа.
+     * Вызывается из сервиса доставки.
+     *
+     * @param orderId идентификатор заказа
+     * @return обновленный заказ
+     */
     @Override
     public OrderDto deliveryOrder(UUID orderId) {
         return setOrderState(orderId, OrderState.DELIVERED);
     }
 
-    // Вызывается из сервиса delivery
+    /**
+     * Обрабатывает неудачную доставку заказа.
+     * Вызывается из сервиса доставки.
+     *
+     * @param orderId идентификатор заказа
+     * @return обновленный заказ
+     */
     @Override
     public OrderDto deliveryFailed(UUID orderId) {
         return setOrderState(orderId, OrderState.DELIVERY_FAILED);
     }
 
-    // Вызов сторонним сервисом в рамках ТЗ не предусмотрен
+    /**
+     * Отмечает заказ как завершенный.
+     * Вызов сторонним сервисом в рамках ТЗ не предусмотрен.
+     *
+     * @param orderId идентификатор заказа
+     * @return обновленный заказ
+     */
     @Override
     public OrderDto completedOrder(UUID orderId) {
         return setOrderState(orderId, OrderState.COMPLETED);
     }
 
+    /**
+     * Рассчитывает общую стоимость заказа.
+     * Запрашивает расчет у сервиса платежей.
+     *
+     * @param orderId идентификатор заказа
+     * @return заказ с рассчитанной стоимостью
+     */
     @Override
     @Transactional
     public OrderDto calculateTotal(UUID orderId) {
@@ -135,6 +206,13 @@ public class OrderServiceImpl implements OrderService {
         return orderMapper.toDto(order);
     }
 
+    /**
+     * Рассчитывает стоимость доставки для заказа.
+     * Запрашивает расчет у сервиса доставки.
+     *
+     * @param orderId идентификатор заказа
+     * @return заказ с рассчитанной стоимостью доставки
+     */
     @Override
     @Transactional
     public OrderDto calculateDelivery(UUID orderId) {
@@ -143,19 +221,41 @@ public class OrderServiceImpl implements OrderService {
         return orderMapper.toDto(order);
     }
 
-    // вызывается из delivery
+    /**
+     * Отмечает заказ как собранный.
+     * Вызывается из сервиса доставки.
+     *
+     * @param orderId идентификатор заказа
+     * @return обновленный заказ
+     */
     @Override
     @Transactional
     public OrderDto assemblyOrder(UUID orderId) {
         return setOrderState(orderId, OrderState.ASSEMBLED);
     }
 
-    // Вызов сторонним сервисом в рамках ТЗ не предусмотрен
+    /**
+     * Обрабатывает неудачную сборку заказа.
+     * Вызов сторонним сервисом в рамках ТЗ не предусмотрен.
+     *
+     * @param orderId идентификатор заказа
+     * @return обновленный заказ
+     */
     @Override
     public OrderDto assemblyFailed(UUID orderId) {
         return setOrderState(orderId, OrderState.ASSEMBLY_FAILED);
     }
 
+    /**
+     * Устанавливает новый статус для заказа.
+     * Выполняется в транзакции.
+     *
+     * @param orderId идентификатор заказа
+     * @param state новый статус
+     * @return обновленный заказ
+     * @throws IllegalArgumentException если orderId или state равны null
+     * @throws NoOrderFoundException если заказ не найден
+     */
     private OrderDto setOrderState(UUID orderId, OrderState state) {
         if (orderId == null || state == null) {
             throw new IllegalArgumentException("Order id and state cannot be null");
@@ -173,11 +273,24 @@ public class OrderServiceImpl implements OrderService {
         });
     }
 
+    /**
+     * Находит заказ по идентификатору.
+     *
+     * @param orderId идентификатор заказа
+     * @return найденный заказ
+     * @throws NoOrderFoundException если заказ не найден
+     */
     private Order getOrder(UUID orderId) {
         return orderRepository.findById(orderId)
                 .orElseThrow(() -> new NoOrderFoundException("No order found for id = " + orderId));
     }
 
+    /**
+     * Создает сущность заказа и резервирует товары на складе.
+     *
+     * @param request данные для создания заказа
+     * @return созданный заказ с характеристиками доставки
+     */
     private Order createOrderEntity(CreateNewOrderRequest request) {
         ShoppingCartDto shoppingCart = request.shoppingCart();
 
@@ -205,6 +318,12 @@ public class OrderServiceImpl implements OrderService {
         return orderRepository.save(order);
     }
 
+    /**
+     * Планирует доставку для заказа.
+     *
+     * @param order заказ
+     * @param deliveryAddress адрес доставки
+     */
     private void planDelivery(Order order, AddressDto deliveryAddress) {
         AddressDto fromAddress = warehouseClient.getWarehouseAddress();
 
@@ -219,6 +338,11 @@ public class OrderServiceImpl implements OrderService {
         orderRepository.save(order);
     }
 
+    /**
+     * Рассчитывает и устанавливает цены для заказа.
+     *
+     * @param order заказ
+     */
     private void calculateAndSetPrices(Order order) {
         OrderDto orderDto = orderMapper.toDto(order);
 
@@ -239,6 +363,11 @@ public class OrderServiceImpl implements OrderService {
         orderRepository.save(order);
     }
 
+    /**
+     * Создает платеж для заказа.
+     *
+     * @param order заказ
+     */
     private void createPayment(Order order) {
         PaymentDto paymentDto = paymentClient.payment(orderMapper.toDto(order));
         order.setPaymentId(paymentDto.paymentId());

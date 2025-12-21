@@ -20,6 +20,11 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.UUID;
 
+/**
+ * Сервис для управления доставками заказов.
+ * Обрабатывает бизнес-логику, связанную с планированием, отслеживанием
+ * и расчетом стоимости доставок.
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -29,14 +34,27 @@ public class DeliveryServiceImpl implements DeliveryService {
     private final OrderClient orderClient;
     private final WarehouseClient warehouseClient;
     private final TransactionTemplate transactionTemplate;
+
     private static final BigDecimal BASE_DELIVERY_RATE = BigDecimal.valueOf(5);
 
+    /**
+     * Создает или планирует новую доставку.
+     *
+     * @param deliveryDto данные доставки
+     * @return созданная доставка в формате DTO
+     */
     @Override
     public DeliveryDto planDelivery(DeliveryDto deliveryDto) {
         Delivery delivery = deliveryMapper.toEntity(deliveryDto);
         return deliveryMapper.toDto(deliveryRepository.save(delivery));
     }
 
+    /**
+     * Отмечает доставку как успешно завершенную.
+     * Обновляет статус доставки и уведомляет сервис заказов.
+     *
+     * @param orderId идентификатор заказа
+     */
     @Override
     public void successfulDelivery(UUID orderId) {
         transactionTemplate.executeWithoutResult(status -> {
@@ -51,6 +69,12 @@ public class DeliveryServiceImpl implements DeliveryService {
         }
     }
 
+    /**
+     * Отмечает, что доставка забрана курьером.
+     * Обновляет статус доставки, уведомляет склад и сервис заказов.
+     *
+     * @param orderId идентификатор заказа
+     */
     @Override
     public void pickedDelivery(UUID orderId) {
         Delivery delivery = transactionTemplate.execute(status -> {
@@ -73,9 +97,14 @@ public class DeliveryServiceImpl implements DeliveryService {
         } catch (Exception e) {
             log.warn("Error while trying to set Assembled status to orderClient", e);
         }
-
     }
 
+    /**
+     * Отмечает доставку как неудачную.
+     * Обновляет статус доставки и уведомляет сервис заказов.
+     *
+     * @param orderId идентификатор заказа
+     */
     @Override
     public void failedDelivery(UUID orderId) {
         transactionTemplate.executeWithoutResult(status -> {
@@ -90,6 +119,20 @@ public class DeliveryServiceImpl implements DeliveryService {
         }
     }
 
+    /**
+     * Рассчитывает стоимость доставки на основе параметров заказа.
+     * Формула расчета включает:
+     * <ol>
+     *   <li>Базовую ставку</li>
+     *   <li>Множитель для определенного адреса склада</li>
+     *   <li>Надбавку за хрупкость (20%)</li>
+     *   <li>Стоимость по весу и объему</li>
+     *   <li>Надбавку за разные улицы отправления и доставки (20%)</li>
+     * </ol>
+     *
+     * @param orderDto данные заказа
+     * @return рассчитанная стоимость доставки, округленная до 2 знаков
+     */
     @Override
     public BigDecimal deliveryCost(OrderDto orderDto) {
         Delivery delivery = getDelivery(orderDto.orderId());
@@ -127,6 +170,13 @@ public class DeliveryServiceImpl implements DeliveryService {
         return cost.setScale(2, RoundingMode.HALF_UP);
     }
 
+    /**
+     * Отменяет доставку.
+     * Обновляет статус доставки на CANCELLED.
+     *
+     * @param deliveryId идентификатор доставки
+     * @throws NoDeliveryFoundException если доставка не найдена
+     */
     @Override
     @Transactional
     public void cancelDelivery(UUID deliveryId) {
@@ -141,6 +191,13 @@ public class DeliveryServiceImpl implements DeliveryService {
         delivery.setDeliveryState(DeliveryState.CANCELLED);
     }
 
+    /**
+     * Находит доставку по идентификатору заказа.
+     *
+     * @param orderId идентификатор заказа
+     * @return найденная доставка
+     * @throws NoDeliveryFoundException если доставка не найдена
+     */
     private Delivery getDelivery(UUID orderId) {
         return deliveryRepository.findByOrderId(orderId)
                 .orElseThrow(() -> new NoDeliveryFoundException("Delivery for orderId = " + orderId + " not found"));

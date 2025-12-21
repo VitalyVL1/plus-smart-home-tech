@@ -5,6 +5,13 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import ru.practicum.security.BaseSecurityConfig;
 import ru.practicum.security.BaseSecurityUsersProperties;
 
+/**
+ * Конфигурация безопасности приложения.
+ * Наследует базовую конфигурацию и активирует Spring Security.
+ *
+ * <p>Использует in-memory аутентификацию с пользователями,
+ * определенными в свойствах приложения.</p>
+ */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig extends BaseSecurityConfig {

@@ -21,6 +21,8 @@ import java.util.UUID;
 
 /**
  * Реализация сервиса управления товарами магазина.
+ * Обрабатывает операции создания, обновления, удаления и получения товаров
+ * с поддержкой кэширования для повышения производительности.
  */
 @Service
 @RequiredArgsConstructor
@@ -29,6 +31,13 @@ public class ShoppingStoreServiceImp implements ShoppingStoreService {
     private final ShoppingStoreRepository shoppingStoreRepository;
     private final ProductMapper productMapper;
 
+    /**
+     * Создает новый товар в магазине.
+     * Очищает кэш товаров после создания.
+     *
+     * @param product DTO нового товара
+     * @return созданный товар
+     */
     @Transactional
     @CacheEvict(cacheNames = "products", allEntries = true)
     @Override
@@ -37,6 +46,14 @@ public class ShoppingStoreServiceImp implements ShoppingStoreService {
         return productMapper.toDto(productEntity);
     }
 
+    /**
+     * Обновляет существующий товар.
+     * Очищает кэш товаров после обновления.
+     *
+     * @param product DTO с обновленными данными товара
+     * @return обновленный товар
+     * @throws ProductNotFoundException если товар не найден
+     */
     @Transactional
     @CacheEvict(cacheNames = "products", allEntries = true)
     @Override
@@ -46,6 +63,14 @@ public class ShoppingStoreServiceImp implements ShoppingStoreService {
         return productMapper.toDto(productToUpdate);
     }
 
+    /**
+     * Удаляет (деактивирует) товар из магазина.
+     * Очищает кэш товаров после удаления.
+     *
+     * @param productId идентификатор товара
+     * @return true, если удаление успешно, false в случае ошибки
+     * @throws ProductNotFoundException если товар не найден
+     */
     @Transactional
     @CacheEvict(cacheNames = "products", allEntries = true)
     @Override
@@ -60,6 +85,14 @@ public class ShoppingStoreServiceImp implements ShoppingStoreService {
         }
     }
 
+    /**
+     * Устанавливает состояние количества для товара.
+     * Очищает кэш товаров после обновления.
+     *
+     * @param request запрос на изменение состояния количества
+     * @return true, если обновление успешно, false в случае ошибки
+     * @throws ProductNotFoundException если товар не найден
+     */
     @Transactional
     @CacheEvict(cacheNames = "products", allEntries = true)
     @Override
@@ -74,18 +107,41 @@ public class ShoppingStoreServiceImp implements ShoppingStoreService {
         }
     }
 
+    /**
+     * Получает товары по категории с пагинацией.
+     * Использует кэширование для повышения производительности.
+     *
+     * @param category категория товаров
+     * @param pageable параметры пагинации
+     * @return страница товаров указанной категории
+     */
     @Cacheable(cacheNames = "products")
     @Override
     public Page<ProductDto> getProductsByCategory(ProductCategory category, Pageable pageable) {
         return productMapper.toDto(shoppingStoreRepository.findAllByProductCategory(category, pageable));
     }
 
+    /**
+     * Получает товар по идентификатору.
+     * Использует кэширование для повышения производительности.
+     *
+     * @param productId идентификатор товара
+     * @return DTO товара
+     * @throws ProductNotFoundException если товар не найден
+     */
     @Cacheable(cacheNames = "products")
     @Override
     public ProductDto getProductById(UUID productId) {
         return productMapper.toDto(getProduct(productId));
     }
 
+    /**
+     * Находит товар по идентификатору.
+     *
+     * @param productId идентификатор товара
+     * @return сущность товара
+     * @throws ProductNotFoundException если товар не найден
+     */
     private Product getProduct(UUID productId) {
         return shoppingStoreRepository.findById(productId)
                 .orElseThrow(() ->

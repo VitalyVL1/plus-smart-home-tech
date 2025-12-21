@@ -20,20 +20,29 @@ import java.math.RoundingMode;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Сервис для управления платежами.
+ * Обрабатывает создание платежей, расчеты стоимости и обработку статусов.
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class PaymentServiceImpl implements PaymentService {
     private final PaymentRepository paymentRepository;
     private final PaymentMapper paymentMapper;
-
     private final OrderClient orderClient;
     private final ShoppingStoreClient shoppingStoreClient;
-
     private final TransactionTemplate transactionTemplate;
-
     private final BigDecimal FEE_PERCENTAGE = BigDecimal.valueOf(0.1);
 
+    /**
+     * Создает платеж для заказа.
+     * Проверяет данные заказа и создает платеж со статусом PENDING.
+     *
+     * @param orderDto данные заказа
+     * @return созданный платеж
+     * @throws NotEnoughInfoInOrderToCalculateException если недостаточно данных для создания платежа
+     */
     @Override
     public PaymentDto payment(OrderDto orderDto) {
         checkOrderDto(orderDto);
@@ -49,6 +58,14 @@ public class PaymentServiceImpl implements PaymentService {
         return paymentMapper.toDto(paymentRepository.save(payment));
     }
 
+    /**
+     * Рассчитывает общую стоимость заказа.
+     * Включает стоимость товаров, доставки и комиссию платежной системы.
+     *
+     * @param orderDto данные заказа
+     * @return общая стоимость заказа, округленная до 2 знаков
+     * @throws NotEnoughInfoInOrderToCalculateException если недостаточно данных для расчета
+     */
     @Override
     public BigDecimal getTotalCost(OrderDto orderDto) {
         BigDecimal deliveryTotal = orderDto.deliveryPrice();
@@ -64,7 +81,12 @@ public class PaymentServiceImpl implements PaymentService {
                 .setScale(2, RoundingMode.HALF_UP);
     }
 
-    //Согласно open API наименование метода такое
+    /**
+     * Обрабатывает успешный платеж (refund согласно OpenAPI).
+     * Обновляет статус платежа на SUCCESS и уведомляет сервис заказов.
+     *
+     * @param paymentId идентификатор платежа
+     */
     @Override
     public void refund(UUID paymentId) {
         log.info("Processing payment SUCCESS for paymentId: {}", paymentId);
@@ -97,6 +119,14 @@ public class PaymentServiceImpl implements PaymentService {
         }
     }
 
+    /**
+     * Рассчитывает стоимость товаров в заказе.
+     * Запрашивает цены товаров у сервиса магазина и умножает на количество.
+     *
+     * @param orderDto данные заказа
+     * @return стоимость товаров, округленная до 2 знаков
+     * @throws NotEnoughInfoInOrderToCalculateException если в заказе нет товаров
+     */
     @Override
     public BigDecimal productCost(OrderDto orderDto) {
         Map<UUID, Long> products = orderDto.products();
@@ -116,6 +146,13 @@ public class PaymentServiceImpl implements PaymentService {
                 .setScale(2, RoundingMode.HALF_UP);
     }
 
+    /**
+     * Обрабатывает неудачный платеж.
+     * Обновляет статус платежа на FAIL и уведомляет сервис заказов.
+     *
+     * @param paymentId идентификатор платежа
+     * @throws IllegalStateException если попытка перевести платеж из SUCCESS в FAIL
+     */
     @Override
     public void failed(UUID paymentId) {
         Payment payment = transactionTemplate.execute(status -> {
@@ -146,11 +183,24 @@ public class PaymentServiceImpl implements PaymentService {
         }
     }
 
+    /**
+     * Находит платеж по идентификатору.
+     *
+     * @param paymentId идентификатор платежа
+     * @return найденный платеж
+     * @throws NoPaymentFoundException если платеж не найден
+     */
     private Payment getPayment(UUID paymentId) {
         return paymentRepository.findPaymentByPaymentId(paymentId)
                 .orElseThrow(() -> new NoPaymentFoundException("Payment with id = " + paymentId + " not found"));
     }
 
+    /**
+     * Проверяет данные заказа на полноту.
+     *
+     * @param orderDto данные заказа
+     * @throws NotEnoughInfoInOrderToCalculateException если данные неполные
+     */
     private void checkOrderDto(OrderDto orderDto) {
         if (orderDto == null) {
             throw new NotEnoughInfoInOrderToCalculateException("Order is null");
@@ -166,9 +216,14 @@ public class PaymentServiceImpl implements PaymentService {
         }
     }
 
+    /**
+     * Рассчитывает комиссию платежной системы.
+     *
+     * @param productPrice стоимость товаров
+     * @return комиссия (10% от стоимости товаров), округленная до 2 знаков
+     */
     private BigDecimal calculateFee(BigDecimal productPrice) {
         return productPrice.multiply(FEE_PERCENTAGE)
                 .setScale(2, RoundingMode.HALF_UP);
     }
 }
-
