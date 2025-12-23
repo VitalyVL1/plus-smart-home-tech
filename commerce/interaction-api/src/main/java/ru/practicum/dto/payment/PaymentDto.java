@@ -35,11 +35,24 @@ public record PaymentDto(
         BigDecimal deliveryTotal,
 
         @Schema(
-                description = "Комиссия платежной системы",
+                description = "Налоги в платеже",
                 example = "47.99",
                 minimum = "0"
         )
-        BigDecimal feeTotal
+        BigDecimal taxTotal,
+
+        @Schema(
+                description = "Стоимость товаров в платеже",
+                example = "1099.99",
+                minimum = "0"
+        )
+        BigDecimal productTotal,
+
+        @Schema(
+                description = "Статус платежа",
+                example = "SUCCESS"
+        )
+        PaymentStatus paymentStatus
 ) {
 
     @Builder

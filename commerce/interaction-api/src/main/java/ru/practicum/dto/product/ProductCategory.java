@@ -9,9 +9,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Schema(description = "Категории товаров")
 public enum ProductCategory {
 
-    @Schema(description = "Освещение") LIGHTING,
+    @Schema(description = "Освещение")
+    LIGHTING,
 
-    @Schema(description = "Системы управления") CONTROL,
+    @Schema(description = "Системы управления")
+    CONTROL,
 
-    @Schema(description = "Датчики и сенсоры") SENSORS
+    @Schema(description = "Датчики и сенсоры")
+    SENSORS
 }

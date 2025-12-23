@@ -60,11 +60,18 @@ public class Payment {
     private BigDecimal deliveryTotal;
 
     /**
-     * Комиссия платежной системы.
+     * Общая сумма налога в платеже.
      */
-    @Column(name = "fee_total", precision = 15, scale = 2)
-    @Schema(description = "Комиссия платежной системы", example = "47.99", minimum = "0")
-    private BigDecimal feeTotal;
+    @Column(name = "tax_total", precision = 15, scale = 2)
+    @Schema(description = "Общая сумма налога в платеже", example = "47.99", minimum = "0")
+    private BigDecimal taxTotal;
+
+    /**
+     * Стоимость товаров в платеже.
+     */
+    @Column(name = "product_total", precision = 15, scale = 2)
+    @Schema(description = "Стоимость товаров в платеже", example = "1099.99", minimum = "0")
+    private BigDecimal productTotal;
 
     /**
      * Текущий статус платежа.

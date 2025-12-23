@@ -55,7 +55,7 @@ public class PaymentController implements PaymentClient {
     @ResponseStatus(HttpStatus.OK)
     @Operation(
             summary = "Рассчитать общую стоимость",
-            description = "Вычисляет полную стоимость заказа (товары + доставка + комиссия)"
+            description = "Вычисляет полную стоимость заказа (товары + доставка + налоги)"
     )
     @ApiResponse(responseCode = "200", description = "Стоимость успешно рассчитана")
     public BigDecimal getTotalCost(
@@ -83,7 +83,7 @@ public class PaymentController implements PaymentClient {
     @ResponseStatus(HttpStatus.OK)
     @Operation(
             summary = "Рассчитать стоимость товаров",
-            description = "Вычисляет стоимость только товаров в заказе (без доставки и комиссии)"
+            description = "Вычисляет стоимость только товаров в заказе (без доставки и налогов)"
     )
     @ApiResponse(responseCode = "200", description = "Стоимость товаров рассчитана")
     public BigDecimal productCost(

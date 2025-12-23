@@ -8,10 +8,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
  */
 @Schema(description = "Статус платежа")
 public enum PaymentStatus {
+    @Schema(description = "Ожидает обработки")
+    PENDING,
 
-    @Schema(description = "Ожидает обработки") PENDING,
+    @Schema(description = "Успешно выполнен")
+    SUCCESS,
 
-    @Schema(description = "Успешно выполнен") SUCCESS,
-
-    @Schema(description = "Не удался") FAIL
+    @Schema(description = "Не удался")
+    FAILED
 }

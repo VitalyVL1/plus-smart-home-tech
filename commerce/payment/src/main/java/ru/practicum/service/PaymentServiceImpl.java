@@ -33,7 +33,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final OrderClient orderClient;
     private final ShoppingStoreClient shoppingStoreClient;
     private final TransactionTemplate transactionTemplate;
-    private final BigDecimal FEE_PERCENTAGE = BigDecimal.valueOf(0.1);
+    private final BigDecimal TAX_PERCENTAGE = BigDecimal.valueOf(0.1);
 
     /**
      * Создает платеж для заказа.
@@ -50,8 +50,9 @@ public class PaymentServiceImpl implements PaymentService {
         Payment payment = Payment.builder()
                 .orderId(orderDto.orderId())
                 .totalPayment(orderDto.totalPrice())
+                .productTotal(orderDto.productPrice())
                 .deliveryTotal(orderDto.deliveryPrice())
-                .feeTotal(calculateFee(orderDto.productPrice()))
+                .taxTotal(calculateTax(orderDto.productPrice()))
                 .paymentStatus(PaymentStatus.PENDING)
                 .build();
 
@@ -60,7 +61,7 @@ public class PaymentServiceImpl implements PaymentService {
 
     /**
      * Рассчитывает общую стоимость заказа.
-     * Включает стоимость товаров, доставки и комиссию платежной системы.
+     * Включает стоимость товаров, доставки и налоги.
      *
      * @param orderDto данные заказа
      * @return общая стоимость заказа, округленная до 2 знаков
@@ -77,7 +78,7 @@ public class PaymentServiceImpl implements PaymentService {
 
         return deliveryTotal
                 .add(productTotal)
-                .add(calculateFee(productTotal))
+                .add(calculateTax(productTotal))
                 .setScale(2, RoundingMode.HALF_UP);
     }
 
@@ -148,29 +149,29 @@ public class PaymentServiceImpl implements PaymentService {
 
     /**
      * Обрабатывает неудачный платеж.
-     * Обновляет статус платежа на FAIL и уведомляет сервис заказов.
+     * Обновляет статус платежа на FAILED и уведомляет сервис заказов.
      *
      * @param paymentId идентификатор платежа
-     * @throws IllegalStateException если попытка перевести платеж из SUCCESS в FAIL
+     * @throws IllegalStateException если попытка перевести платеж из SUCCESS в FAILED
      */
     @Override
     public void failed(UUID paymentId) {
         Payment payment = transactionTemplate.execute(status -> {
             Payment paymentInProgress = getPayment(paymentId);
 
-            // Если уже в FAIL - ничего не делаем
-            if (paymentInProgress.getPaymentStatus() == PaymentStatus.FAIL) {
-                log.info("Payment {} already in FAIL state", paymentId);
+            // Если уже в FAILED - ничего не делаем
+            if (paymentInProgress.getPaymentStatus() == PaymentStatus.FAILED) {
+                log.info("Payment {} already in FAILED state", paymentId);
                 return paymentInProgress;
             }
 
-            // Нельзя перейти из SUCCESS в FAIL
+            // Нельзя перейти из SUCCESS в FAILED
             if (paymentInProgress.getPaymentStatus() == PaymentStatus.SUCCESS) {
-                log.warn("Attempt to move payment {} from SUCCESS to FAIL", paymentId);
-                throw new IllegalStateException("Cannot move payment from SUCCESS to FAIL");
+                log.warn("Attempt to move payment {} from SUCCESS to FAILED", paymentId);
+                throw new IllegalStateException("Cannot move payment from SUCCESS to FAILED");
             }
 
-            paymentInProgress.setPaymentStatus(PaymentStatus.FAIL);
+            paymentInProgress.setPaymentStatus(PaymentStatus.FAILED);
             return paymentInProgress;
         });
 
@@ -217,13 +218,13 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     /**
-     * Рассчитывает комиссию платежной системы.
+     * Рассчитывает сумму налога в платеже.
      *
      * @param productPrice стоимость товаров
-     * @return комиссия (10% от стоимости товаров), округленная до 2 знаков
+     * @return НДС (10% от стоимости товаров), округленный до 2 знаков
      */
-    private BigDecimal calculateFee(BigDecimal productPrice) {
-        return productPrice.multiply(FEE_PERCENTAGE)
+    private BigDecimal calculateTax(BigDecimal productPrice) {
+        return productPrice.multiply(TAX_PERCENTAGE)
                 .setScale(2, RoundingMode.HALF_UP);
     }
 }
